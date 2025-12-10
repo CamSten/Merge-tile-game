@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Random;
 
 public class Board extends JPanel {
-    boolean keepRunning = true;
     List<Tile> tiles = new ArrayList<>();
     int rows;
     int cols;
@@ -112,16 +111,14 @@ public class Board extends JPanel {
         List<Tile> subset = new ArrayList<>();
         switch (direction) {
             case DOWN, UP -> {
-                int index = col;
                 for (int i = 0; i < rows; i++) {
-                    subset.add(tiles.get(i * cols + index));
+                    subset.add(tiles.get(i * cols + col));
                 }
                 System.out.println("subset is returned in getSubset");
                 return subset;
             }
             case LEFT, RIGHT -> {
-                int index = row;
-                int start = index * cols;
+                int start = row * cols;
                 System.out.println("subset is returned in getSubset");
                 return new ArrayList<>(tiles.subList(start, start + cols));
             }
@@ -145,7 +142,8 @@ public class Board extends JPanel {
                     List<Tile> subset = getSubset(tile.getRow(), tile.getCol(), direction);
                     subset.remove(tile);
                     int index = tile.getRow() + direction.getMoveFactor();
-                    for (Tile t : subset) {
+                    for (int i = 0; i < subset.size(); i++) {
+                        Tile t = subset.get(i);
                         System.out.println("in getAdjacent, coordinates row/col for tile and t are: " + tile.getRow() + " " + tile.getCol() + " |" + t.getRow() + " " + t.getCol());
                         System.out.println("THUS; index is: " + index + " and t.getRow() is: " + t.getRow());
                         if (t.getRow() == index ) {
@@ -160,7 +158,8 @@ public class Board extends JPanel {
                     subset.remove(tile);
                     int index = tile.getCol() + direction.getMoveFactor();
                     System.out.println("in getAdjacent, case LEFT/RIGHT is reached");
-                    for (Tile t : getSubset(tile.getRow(), tile.getCol(), direction)) {
+                    for (int i = 0; i < subset.size(); i++) {
+                        Tile t = subset.get(i);
                         System.out.println("in getAdjacent, t.getCol is: " + t.getCol());
                         if (t.getCol() == index) {
                             return t;
@@ -175,11 +174,8 @@ public class Board extends JPanel {
 
     protected void assessKeyAction(char c) {
         Direction direction = getDirection(c);
-        List<Tile[]> tileSubsets = new ArrayList<>();
         List<Tile> valueTiles = new ArrayList<>();
         if (direction != null) {
-            tileSubsets = getAllTileSubsets(direction);
-
             for (Tile t : tiles) {
                 if (t.getValue() > 0) {
                     valueTiles.add(t);
@@ -329,7 +325,7 @@ public class Board extends JPanel {
                         start = tile.getRow();
                         change = Direction.UP.getMoveFactor();
                     }
-                    moveDistance = getMoveDistance(direction, moveDistance, start, stop, change, subset);
+                    moveDistance = getMoveDistance(direction, moveDistance, start, stop, subset);
                     break;
                 }
 
@@ -345,7 +341,7 @@ public class Board extends JPanel {
                         stop = rows;
                         change = Direction.DOWN.getMoveFactor();
                     }
-                    moveDistance = getMoveDistance(direction, moveDistance, start, stop, change, subset);
+                    moveDistance = getMoveDistance(direction, moveDistance, start, stop, subset);
                 }
             }
             System.out.println("   in calculateMoves, start is: " + start + ", stop is: " + stop + " and change is: " + change);
@@ -356,28 +352,27 @@ public class Board extends JPanel {
         }
     }
 
-    private int getMoveDistance(Direction direction, int moveDistance, int start, int stop, int change, List<Tile> subset) {
+    private int getMoveDistance(Direction direction, int moveDistance, int start, int stop, List<Tile> subset) {
         Tile adjacent = null;
         switch (direction) {
             case UP, LEFT -> {
-                for (int i = start; i > stop; i += change) {
-                    adjacent = getAdjacent(subset.get(i), direction);
-                    if (adjacent != null && adjacent.getValue() == 0) {
-                        moveDistance += 1;
-                        System.out.println("in calculateMoves, moveDistance is: " + moveDistance);
-                    }
+                while (start > stop) {
+                    adjacent = getAdjacent(subset.get(start), direction);
+                    break;
                 }
             }
             case RIGHT, DOWN -> {
                 List<Tile> reverse = subset.reversed();
-                for (int i = start; i < stop; i += change) {
-                    adjacent = getAdjacent(reverse.get(i), direction);
-                    if (adjacent != null && adjacent.getValue() == 0) {
-                        moveDistance += 1;
-                        System.out.println("in calculateMoves, moveDistance is: " + moveDistance);
-                    }
+                while (start < stop) {
+                    adjacent = getAdjacent(reverse.get(start), direction);
+                    break;
                 }
             }
+        }
+
+        if (adjacent != null && adjacent.getValue() == 0) {
+            moveDistance += 1;
+            System.out.println("in calculateMoves, moveDistance is: " + moveDistance);
         }
         return moveDistance;
     }
