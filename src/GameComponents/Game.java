@@ -4,65 +4,29 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Game extends JFrame {
-    private Board board;
-    private int rows;
-    private int cols;
+    private static int rows = 4;
+    private static int cols = 4;
+    private static Board board = new Board(rows, cols);
     private JPanel centerPanel;
     private JPanel topPanel;
     private JPanel bottomPanel;
     private Color backgroundColor = Color.darkGray;
     private Color foregroundColor = Color.lightGray;
 
-    public Game (Board board, boolean newGame, int rows, int cols){
+    public Game(int rows, int cols) {
+        this.rows = rows;
+        this.cols = cols;
+        board.requestFocusInWindow();
+        setVisible(true);
         setLayout(new BorderLayout());
+        setMinimumSize(new Dimension(500, 600));
         setBackground(backgroundColor);
         centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBackground(backgroundColor);
+        centerPanel.add(board, BorderLayout.CENTER);
         add(centerPanel, BorderLayout.CENTER);
-
-        if (!newGame){
-            this.board = board;
-            centerPanel.add(board, BorderLayout.CENTER);
-
-        }
-        else {
-            this.rows = rows;
-            this.cols = cols;
-            board = new Board(rows, cols);
-            centerPanel.add(board, BorderLayout.CENTER);
-        }
-
-        addKeyListener(new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                List<Character> actionCharacters = new ArrayList<>();
-                actionCharacters.add('w');
-                actionCharacters.add('a');
-                actionCharacters.add('s');
-                actionCharacters.add('d');
-                for (char c : actionCharacters){
-                    if(e.getKeyChar() == c ) {
-                        validateMovement(c);
-                    }
-                }
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-
-            }
-        });
 
         JTextArea points = new JTextArea();
         points.setVisible(true);
@@ -86,12 +50,191 @@ public class Game extends JFrame {
         bottomPanel.setVisible(true);
         bottomPanel.setBackground(backgroundColor);
         bottomPanel.add(quitButton, BorderLayout.EAST);
+        add(bottomPanel, BorderLayout.SOUTH);
         repaint();
         revalidate();
         pack();
     }
 
-    private void validateMovement(char c){
+    private void moveTiles(Tile tile, Board.Direction direction){
 
     }
+
+    private void mergeTiles(Tile tile, Board.Direction direction){
+
+    }
+
+    private Tile getAdjacent(Tile tile, Board.Direction direction){
+return tile;
+    }
 }
+
+
+
+//
+//
+//        System.out.println("Game constructor was reached");
+//
+//
+//
+////        if (!newGame){
+////            this.board = board;
+////            centerPanel.add(board, BorderLayout.CENTER);
+////        }
+////
+//
+//
+//
+//
+//
+//    protected static void validateMovement(char c){
+//        System.out.println("validateMovement was reached");
+//        if (!checkIfCompleted()) {
+//            boolean doneMoving = false;
+//            switch (c) {
+//                case 'w': {
+//                    System.out.println("case W was reached");
+//                    while (!doneMoving) {
+//                        for (int i = 0; i < rows-1; i++) {
+//                            for (Tile tile : board.getRow(i)) {
+//                                Tile adjacent = board.getAdjacent(tile, Board.Direction.UP);
+//                                if (adjacent != null) {
+//                                    if (checkIfMergeable(tile, adjacent)) {
+//                                        mergeTiles(tile, adjacent, Board.Direction.UP);
+//                                        doneMoving = true;
+//                                    } else if (tile.getValue() > 0 && tile.getRow() < rows && adjacent.getValue() == 0) {
+//                                        tile.setRow(adjacent.getRow());
+//                                        tile.adjustTile(tile);
+//
+//                                        adjacent = board.getAdjacent(tile, Board.Direction.UP);
+//                                        if (tile.getRow() == 0 || (adjacent.getRow() == 0 && adjacent.getValue() > 0)) {
+//                                            doneMoving = true;
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                    break;
+//                }
+//                case 'a': {
+//                    while (!doneMoving) {
+//                        for (int i = 1; i <= cols; i++){
+//                            for (int j = 0; j < board.getColumn(i).size(); j++) {
+//                                Tile tile = board.getColumn(i).get(j);
+//                                Tile adjacent = board.getAdjacent(tile, Board.Direction.LEFT);
+//                                if (adjacent != null) {
+//                                    if (checkIfMergeable(tile, adjacent)) {
+//                                        mergeTiles(tile, adjacent, Board.Direction.LEFT);
+//                                        System.out.println("doneMoving is True (done merging)");
+//                                        doneMoving = true;
+//                                    }
+//                                    else if (!checkIfMergeable(tile, adjacent) && tile.getValue() > 0 && tile.getCol() > 0 && adjacent.getValue() == 0) {
+//                                       boolean keepMoving = true;
+//                                        while (keepMoving) {
+//                                            System.out.println("---move is possible. tileValue is: " + tile.getValue() + " positions are, tile and adjacent (col, row): " + tile.getCol() + " " + tile.getRow() + "|" + adjacent.getCol() + " " + adjacent.getRow());
+//                                            Tile tempTile = new Tile(0, true, Color.lightGray, adjacent.getRow(),adjacent.getCol());
+//                                            adjacent.setCol(tile.getCol());
+//                                            adjacent.setRow(tile.getCol());
+//                                            adjacent.adjustTile(adjacent);
+//
+//                                            tile.setCol(tempTile.getCol());
+//                                            tile.setRow(tempTile.getRow());
+//                                            tile.adjustTile(tempTile);
+//
+//                                            tile = adjacent;
+//                                            if (tile.getCol() == 0 || (adjacent.getCol() == 0 && adjacent.getValue() > 0)) {
+//                                                System.out.println("doneMoving is True (no possible moves left)");
+//                                                keepMoving = false;
+//                                            }
+//                                        }
+//                                    } else if (i == cols - 1 && !doneMoving) {
+//                                        System.out.println("doneMoving is True (no possible move)");
+//                                        doneMoving = true;
+//
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                    break;
+//                }
+//                case 's': {
+//                    while (!doneMoving) {
+//                        for (int i = rows; i > 1; i--) {
+//                            for (Tile tile : board.getRow(i)) {
+//                                Tile adjacent = board.getAdjacent(tile, Board.Direction.DOWN);
+//                                if (adjacent != null) {
+//                                    if (checkIfMergeable(tile, adjacent)) {
+//                                        mergeTiles(tile, adjacent, Board.Direction.DOWN);
+//                                        doneMoving = true;
+//                                    } else if (tile.getValue() > 0 && tile.getRow() > 1 && adjacent.getValue() == 0) {
+//                                        tile.setRow(adjacent.getRow());
+//                                        adjacent = board.getAdjacent(tile, Board.Direction.DOWN);
+//                                        if (tile.getRow() == 0 || (adjacent.getRow() == 0) && adjacent.getValue() > 0) {
+//                                            doneMoving = true;
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                    break;
+//                }
+//                case 'd': {
+//                    while (!doneMoving){
+//                        for (int i = cols; i > 1; i--){
+//                            for (Tile tile : board.getColumn(i)) {
+//                                Tile adjacent = board.getAdjacent(tile, Board.Direction.RIGHT);
+//                                if (adjacent != null) {
+//                                    if (checkIfMergeable(tile, adjacent)) {
+//                                        mergeTiles(tile, adjacent, Board.Direction.RIGHT);
+//                                        doneMoving = true;
+//                                    } else if (tile.getValue() > 0 && tile.getCol() < cols && adjacent.getValue() == 0) {
+//                                        tile.setCol(adjacent.getCol());
+//                                        adjacent = board.getAdjacent(tile, Board.Direction.RIGHT);
+//                                        if (tile.getCol() == cols || (adjacent.getCol() == cols && adjacent.getValue() > 0)) {
+//                                            doneMoving = true;
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                    break;
+//                }
+//            }
+//        }
+//    }
+//    private static boolean checkIfCompleted(){
+//        return false;
+//    }
+//    private static boolean checkIfMergeable(Tile tile, Tile adjacent){
+//        System.out.println("checkIfMergeable was reached. row and col is: " + tile.getCol() + " " + tile.getRow() + " vs " + adjacent.getCol() + " " + adjacent.getRow());
+//        if (tile.getValue() > 0  && tile.getValue() == adjacent.getValue()){
+//            System.out.println("checkIfMergeable is true");
+//            return true;
+//        }
+//        else {
+//            System.out.println("checkIfMergeable is false");
+//            return false;
+//        }
+//    }
+//    private static void mergeTiles(Tile tile, Tile adjacent, Board.Direction direction){
+//        System.out.println("mergeTiles was reached");
+//        tile.setValue(tile.value+adjacent.value);
+//        switch (direction) {
+//            case UP, DOWN: {
+//                tile.setRow(adjacent.getRow());
+//                tile.adjustTile(tile);
+//                break;
+//            }
+//            case LEFT, RIGHT: {
+//                tile.setCol(adjacent.getCol());
+//                tile.adjustTile(tile);
+//                break;
+//            }
+//        }
+//    }
+//
+//}
