@@ -140,15 +140,23 @@ public class Board extends JPanel {
         }
 
         if(hasValuesChanged(allSubsetValues, allAdjustedValues)) {
-            for (int i = 0; i < allAdjustedValues.size(); i++) {
-                List<Tile> subset = allTileSubsets.get(i);
-                List<Integer> adjustedValues = allAdjustedValues.get(i);
+            if (!completed()) {
+                for (int i = 0; i < allAdjustedValues.size(); i++) {
+                    List<Tile> subset = allTileSubsets.get(i);
+                    List<Integer> adjustedValues = allAdjustedValues.get(i);
 
-                for (int j = 0; j < adjustedValues.size(); j++) {
-                    Tile.adjustTile(subset.get(j), adjustedValues.get(j));
+                    for (int j = 0; j < adjustedValues.size(); j++) {
+                        Tile.adjustTile(subset.get(j), adjustedValues.get(j));
+                        if (adjustedValues.get(j) == 2048){
+                            gameOverActions();
+                        }
+                    }
                 }
+                addTile();
             }
-            addTile();
+            else {
+                gameOverActions();
+            }
         }
     }
     private boolean hasValuesChanged(List<List<Integer>> allSubsetValues, List<List<Integer>>  allAdjustedValues){
@@ -266,5 +274,17 @@ public class Board extends JPanel {
             tileSubsets.add(subset);
         }
         return tileSubsets;
+    }
+    private void gameOverActions(){
+        boolean win = false;
+        for (Tile t : tiles){
+            if (t.getValue() == 2048){
+                win = true;
+            }
+        }
+        if (win){
+
+        }
+
     }
 }

@@ -26,24 +26,60 @@ public class Tile extends JButton {
             setForeground(textColor);
         }
     }
-    public static void adjustTile(Tile tile, int value) {
-        System.out.println("adjustTile was reached, previous value is: " + tile.getValue() + ", new value is: " + value);
+
+    public static void adjustTile(Tile tile, int value){
         tile.setValue(value);
-        if (tile.getValue() > 0) {
-            tile.setBackground(Color.BLUE);
-            tile.setForeground(Color.white);
-            System.out.println("__ValueTile is adjusted, position row/col: " + tile.getRow() + " " + tile.getCol());
-            tile.setText(String.valueOf(tile.getValue()));
-            tile.repaint();
-            tile.revalidate();
-        } else if (tile.getValue() == 0){
-            tile.setBackground(Color.lightGray);
-            System.out.println("New empty tile is adjusted, position row/col: " + tile.getRow() + " " + tile.getCol());
+        if (tile.getValue() > 0){
+            tile.setBackground(getColor(value));
+            tile.setForeground(Color.WHITE);
             tile.setText(String.valueOf(tile.getValue()));
             tile.repaint();
             tile.revalidate();
         }
+        else {
+            tile.setBackground(Color.lightGray);
+            tile.repaint();
+            tile.revalidate();
+        }
     }
+//    public static void adjustTile(Tile tile, int value) {
+//        System.out.println("adjustTile was reached, previous value is: " + tile.getValue() + ", new value is: " + value);
+//        tile.setValue(value);
+//        if (tile.getValue() > 0) {
+//            tile.setBackground(Color.BLUE);
+//            tile.setForeground(Color.white);
+//            System.out.println("__ValueTile is adjusted, position row/col: " + tile.getRow() + " " + tile.getCol());
+//            tile.setText(String.valueOf(tile.getValue()));
+//            tile.repaint();
+//            tile.revalidate();
+//        } else if (tile.getValue() == 0){
+//            tile.setBackground(Color.lightGray);
+//            System.out.println("New empty tile is adjusted, position row/col: " + tile.getRow() + " " + tile.getCol());
+//            tile.setText(String.valueOf(tile.getValue()));
+//            tile.repaint();
+//            tile.revalidate();
+//        }
+//    }
+    private static Color getColor(int value){
+        double base = 2;
+        int exponent = 0;
+        double newvalue = 0;
+
+        double newValue = Math.sqrt(value);
+
+
+            for (int i = 0; i < value; i++){
+                double number = Math.pow (base, i);
+                if (number == value){
+                    exponent = i;
+                }
+            }
+
+
+        TileColor tileColor = new TileColor(exponent);
+        return tileColor.getColor();
+    }
+
     public int getValue(){
         return value;
     }
