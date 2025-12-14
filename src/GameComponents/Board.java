@@ -1,12 +1,10 @@
 package GameComponents;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 
 public class Board extends JPanel {
     List<Tile> tiles = new ArrayList<>();
@@ -16,18 +14,8 @@ public class Board extends JPanel {
     boolean full = false;
 
     public enum Direction {
-        UP(-1), DOWN(+1), LEFT(-1), RIGHT(+1);
-        private final int moveFactor;
-
-        Direction(int moveFactor) {
-            this.moveFactor = moveFactor;
-        }
-
-        public int getMoveFactor() {
-            return moveFactor;
-        }
+        UP, DOWN, LEFT, RIGHT;
     }
-
 
     public Board(int rows, int cols) {
         this.rows = rows;
@@ -39,7 +27,6 @@ public class Board extends JPanel {
             add(tile);
         }
         setCoordinates();
-
         addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -68,12 +55,44 @@ public class Board extends JPanel {
         });
     }
 
+    protected void assessKeyAction(char c) {
+        System.out.println("assessKeyAction was reached");
+        Direction direction = getDirection(c);
+        if (direction != null) {
+            assessMovement(direction);
+        }
+    }
+
     private void setCoordinates() {
-        List<Tile[]> allRows = getAllTileSubsets(Direction.LEFT);
-        for (Tile[] tiles : allRows) {
-            for (int i = 0; i < tiles.length; i++) {
-                tiles[i].setCol(i);
+        for (Tile t : tiles) {
+            int index = tiles.indexOf(t);
+            t.setRow(index / rows);
+            t.setCol(index % cols);
+            System.out.println("IN SET COORDINATES, ROW/COL ARE: " + tiles.indexOf(t) + " : " + t.getRow() + " " + t.getCol());
+        }
+    }
+
+    private boolean completed() {
+        int numberOfValueTiles = 0;
+        for (Tile t : tiles) {
+            if (t.getValue() == 0) {
+                numberOfValueTiles += 1;
             }
+        }
+        return numberOfValueTiles == tiles.size();
+    }
+
+    private void addTile() {
+        Random random = new Random();
+        List<Tile> emptyTiles = new ArrayList<>();
+        if (!completed()) {
+            for (Tile t : tiles) {
+                if (t.getValue() == 0) {
+                    emptyTiles.add(t);
+                }
+            }
+            Tile randomTile = emptyTiles.get(random.nextInt(emptyTiles.size()));
+            Tile.adjustTile(randomTile, getStartingValue());
         }
     }
 
@@ -84,9 +103,9 @@ public class Board extends JPanel {
         }
         Random random = new Random();
         Tile randomTileOne = tiles.get(random.nextInt(tiles.size()));
-        Tile randomTileTwo = tiles.getLast();
-        adjustTile(randomTileOne, getStartingValue());
-        adjustTile(randomTileTwo, getStartingValue());
+        Tile randomTileTwo = tiles.get(random.nextInt(tiles.size()));
+        Tile.adjustTile(randomTileOne, getStartingValue());
+        Tile.adjustTile(randomTileTwo, getStartingValue());
     }
 
     private int getStartingValue() {
@@ -98,95 +117,113 @@ public class Board extends JPanel {
         if (randomValue == 0) {
             return values.getFirst();
         } else {
-            return values.get(1);
+            return values.getLast();
         }
     }
 
-    public List<Tile> getTiles() {
-        return tiles;
+    private void assessMovement(Direction direction) {
+        List<List<Tile>> allTileSubsets = getAllTileSubsets(direction);
+        List<List<Integer>> allSubsetValues = getTileValues(direction);
+        List<List<Integer>> allAdjustedValues = new ArrayList<>();
+        boolean reversed = direction == Direction.RIGHT || direction == Direction.DOWN;
+        for (List<Integer> l : allSubsetValues) {
+            List<Integer> line = new ArrayList<>(l);
+            if (reversed) {
+                Collections.reverse(line);
+            }
+            List<Integer> adjustedValues = getAdjustedValues(line);
+            List<Integer>mergedValues = new ArrayList<>(adjustedValues);
+            if (reversed) {
+                Collections.reverse(mergedValues);
+            }
+                allAdjustedValues.add(mergedValues);
+        }
+
+        if(hasValuesChanged(allSubsetValues, allAdjustedValues)) {
+            for (int i = 0; i < allAdjustedValues.size(); i++) {
+                List<Tile> subset = allTileSubsets.get(i);
+                List<Integer> adjustedValues = allAdjustedValues.get(i);
+
+                for (int j = 0; j < adjustedValues.size(); j++) {
+                    Tile.adjustTile(subset.get(j), adjustedValues.get(j));
+                }
+            }
+            addTile();
+        }
+    }
+    private boolean hasValuesChanged(List<List<Integer>> allSubsetValues, List<List<Integer>>  allAdjustedValues){
+        List<Integer> initialValues = new ArrayList<>();
+        int changedValues = 0;
+        for (List<Integer> l : allSubsetValues) {
+            initialValues.addAll(l);
+        }
+        List<Integer>newValues = new ArrayList<>();
+        for (List<Integer> l : allAdjustedValues){
+            newValues.addAll(l);
+        }
+        for (int i = 0; i < initialValues.size(); i++){
+            if (!Objects.equals(initialValues.get(i), newValues.get(i))){
+                changedValues+=1;
+            }
+        }
+        return changedValues > 0;
     }
 
-    public List<Tile> getSubset(int row, int col, Direction direction) {
-        System.out.println("getSubset was reached");
+    private List<List<Integer>> getTileValues(Direction direction) {
+        List<List<Tile>> allTileSubsets = getAllTileSubsets(direction);
+        List<List<Integer>> allSubsetValues = new ArrayList<>();
+        for (List<Tile> subset : allTileSubsets) {
+            List<Integer> subsetValues = new ArrayList<>();
+            for (Tile t : subset) {
+                subsetValues.add(t.getValue());
+            }
+            allSubsetValues.add(subsetValues);
+        }
+        return allSubsetValues;
+    }
+
+    private List<Integer> getAdjustedValues(List<Integer> subset) {
+        List<Integer> adjustedValues = new ArrayList<>();
+        List<Integer> nonZeroValues = new ArrayList<>();
+        for (int i = 0; i < subset.size(); i++) {
+            if (subset.get(i) != 0) {
+                nonZeroValues.add(subset.get(i));
+            }
+        }
+        if (nonZeroValues.size() < 2) {
+            adjustedValues.addAll(nonZeroValues);
+        } else {
+            for (int i = 0; i < nonZeroValues.size(); i++) {
+                if (i < nonZeroValues.size() -1 && nonZeroValues.get(i).equals(nonZeroValues.get(i + 1))) {
+                    adjustedValues.add((nonZeroValues.get(i)) * 2);
+                    i++;
+                } else {
+                    adjustedValues.add(nonZeroValues.get(i));
+                }
+            }
+        }
+        while (adjustedValues.size() < subset.size()) {
+            adjustedValues.add(0);
+        }
+        return adjustedValues;
+    }
+
+    public List<Tile> getSubset(int index, Direction direction) {
+        System.out.println("getSubset was reached, direction is: " + direction + "  & index is: " + index);
         List<Tile> subset = new ArrayList<>();
         switch (direction) {
             case DOWN, UP -> {
                 for (int i = 0; i < rows; i++) {
-                    subset.add(tiles.get(i * cols + col));
+                    subset.add(tiles.get(i * cols + index));
                 }
-                System.out.println("subset is returned in getSubset");
                 return subset;
             }
             case LEFT, RIGHT -> {
-                int start = row * cols;
-                System.out.println("subset is returned in getSubset");
+                int start = index * cols;
                 return new ArrayList<>(tiles.subList(start, start + cols));
             }
             default -> {
                 return null;
-            }
-        }
-    }
-
-    public List<Tile> getRow(int row) {
-        int start = row * cols;
-        return tiles.subList(start, start + rows);
-    }
-
-    public Tile getAdjacent(Tile tile, Direction direction) {
-        System.out.println("getAdjacent is reached, direction is: " + direction);
-        if (tile != null) {
-            switch (direction) {
-                case UP, DOWN: {
-                    System.out.println("in getAdjacent, case UP/DOWN is reached");
-                    List<Tile> subset = getSubset(tile.getRow(), tile.getCol(), direction);
-                    subset.remove(tile);
-                    int index = tile.getRow() + direction.getMoveFactor();
-                    for (int i = 0; i < subset.size(); i++) {
-                        Tile t = subset.get(i);
-                        System.out.println("in getAdjacent, coordinates row/col for tile and t are: " + tile.getRow() + " " + tile.getCol() + " |" + t.getRow() + " " + t.getCol());
-                        System.out.println("THUS; index is: " + index + " and t.getRow() is: " + t.getRow());
-                        if (t.getRow() == index ) {
-                            System.out.println("in getAdjacent, t was returned");
-                            return t;
-                        }
-                    }
-                    break;
-                }
-                case LEFT, RIGHT: {
-                    List<Tile> subset = getSubset(tile.getRow(), tile.getCol(), direction);
-                    subset.remove(tile);
-                    int index = tile.getCol() + direction.getMoveFactor();
-                    System.out.println("in getAdjacent, case LEFT/RIGHT is reached");
-                    for (int i = 0; i < subset.size(); i++) {
-                        Tile t = subset.get(i);
-                        System.out.println("in getAdjacent, t.getCol is: " + t.getCol());
-                        if (t.getCol() == index) {
-                            return t;
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-        return null;
-    }
-
-    protected void assessKeyAction(char c) {
-        Direction direction = getDirection(c);
-        List<Tile> valueTiles = new ArrayList<>();
-        if (direction != null) {
-            for (Tile t : tiles) {
-                if (t.getValue() > 0) {
-                    valueTiles.add(t);
-                    System.out.println("value tile in assessKeyAction: " + t.getValue());
-                }
-            }
-            for (Tile t : valueTiles) {
-                if (t != null && t.getValue() > 0) {
-                    System.out.println("in assessKeyAction, moveTile is called for tile with index" + valueTiles.indexOf(t));
-                    calculateMoves(t, direction);
-                }
             }
         }
     }
@@ -217,332 +254,17 @@ public class Board extends JPanel {
         return d;
     }
 
-    private List<Tile[]> getAllTileSubsets(Direction direction) {
-        List<Tile[]> tileSubsets = new ArrayList<>();
-        switch (direction) {
-            case LEFT, RIGHT: {
-                for (int i = 0; i < rows; i++) {
-                    Tile[] rowArray = new Tile[cols];
-                    List<Tile> arrayPart = getRow(i);
-                    for (int j = 0; j < cols; j++) {
-                        rowArray[j] = arrayPart.get(j);
-                    }
-                    tileSubsets.add(rowArray);
-                }
-                break;
-            }
-
-            case UP, DOWN: {
-                for (int i = 0; i < cols; i++) {
-                    Tile[] colArray = new Tile[rows];
-                    List<Tile> arrayPart = getSubset(i, i, direction);
-                    for (int j = 0; j < rows; j++) {
-                        colArray[j] = arrayPart.get(j);
-                    }
-                    tileSubsets.add(colArray);
-                }
-                break;
-            }
+    private List<List<Tile>> getAllTileSubsets(Direction direction) {
+        int count = rows;
+        if (direction == Direction.LEFT || direction == Direction.RIGHT){
+            count = cols;
+        }
+        System.out.println("getAllTileSubsets was reached");
+        List<List<Tile>> tileSubsets = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            List<Tile> subset = getSubset(i, direction);
+            tileSubsets.add(subset);
         }
         return tileSubsets;
     }
-
-    protected boolean checkIfAdjacentIsEmpty(Tile tile, Direction direction) {
-        return getAdjacent(tile, direction) != null && getAdjacent(tile, direction).getValue() == 0;
-    }
-
-    private boolean checkIfMergeable(Tile tile, Direction direction) {
-        List<Tile> subset = getSubset(tile.getRow(), tile.getCol(), direction);
-        List<Tile> valueTiles = findValueTiles(subset);
-        int value = tile.getValue();
-        if (getAdjacent(tile, direction) != null && value > 0 && getAdjacent(tile, direction).getValue() == value) {
-            return true;
-        } else if (valueTiles.size() == 2 && !isFinalPosition(tile, direction)) {
-            Tile tileOne = valueTiles.getFirst();
-            Tile tileTwo = valueTiles.getLast();
-            return tileOne.getValue() == tileTwo.getValue();
-        } else if (valueTiles.size() == 3) {
-            valueTiles.remove(tile);
-            for (Tile t : valueTiles) {
-                if (t.getValue() == tile.getValue() && checkIfAdjacentIsEmpty(tile, direction)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isFinalPosition(Tile tile, Direction direction) {
-        switch (direction) {
-            case LEFT -> {
-                if (tile.getCol() == 0) {
-                    return true;
-                }
-            }
-            case RIGHT -> {
-                if (tile.getCol() == cols) {
-                    return true;
-                }
-            }
-            case DOWN -> {
-                if (tile.getRow() == rows) {
-                    return true;
-                }
-            }
-            case UP -> {
-                if (tile.getRow() == 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    protected void calculateMoves(Tile tile, Direction direction) {
-        System.out.println("calculateMoves was reached. Direction is: " + direction);
-        boolean mergeable = false;
-        int moveDistance = 0;
-        int start = 0;
-        int stop = 0;
-        int change = 0;
-
-        Tile adjacent = getAdjacent(tile, direction);
-        if (adjacent != null) {
-            System.out.println("- - - in calculateMoves, adjacent isn't null");
-            if (checkIfMergeable(tile, direction)) {
-                System.out.println("in calculateMoves, mergeable is TRUE");
-                mergeable = true;
-                moveDistance += 1;
-            }
-            switch (direction) {
-                case LEFT, UP-> {
-                    List<Tile> subset = getSubset(tile.getRow(), tile.getCol(), direction);
-                    if (direction == Direction.LEFT){
-                        start = tile.getCol();
-                        change = Direction.LEFT.getMoveFactor();
-                    }
-                    else {
-                        start = tile.getRow();
-                        change = Direction.UP.getMoveFactor();
-                    }
-                    moveDistance = getMoveDistance(direction, moveDistance, start, stop, subset);
-                    break;
-                }
-
-                case DOWN, RIGHT -> {
-                    List<Tile> subset = getSubset(tile.getRow(), tile.getCol(), direction).reversed();
-                    if (direction == Direction.RIGHT) {
-                        start = tile.getCol();
-                        stop = cols;
-                        change = Direction.RIGHT.getMoveFactor();
-                    }
-                    else {
-                        start = tile.getRow();
-                        stop = rows;
-                        change = Direction.DOWN.getMoveFactor();
-                    }
-                    moveDistance = getMoveDistance(direction, moveDistance, start, stop, subset);
-                }
-            }
-            System.out.println("   in calculateMoves, start is: " + start + ", stop is: " + stop + " and change is: " + change);
-
-            if (moveDistance > 0) {
-                moveTiles(tile, direction, mergeable);
-            }
-        }
-    }
-
-    private int getMoveDistance(Direction direction, int moveDistance, int start, int stop, List<Tile> subset) {
-        Tile adjacent = null;
-        switch (direction) {
-            case UP, LEFT -> {
-                while (start > stop) {
-                    adjacent = getAdjacent(subset.get(start), direction);
-                    break;
-                }
-            }
-            case RIGHT, DOWN -> {
-                List<Tile> reverse = subset.reversed();
-                while (start < stop) {
-                    adjacent = getAdjacent(reverse.get(start), direction);
-                    break;
-                }
-            }
-        }
-
-        if (adjacent != null && adjacent.getValue() == 0) {
-            moveDistance += 1;
-            System.out.println("in calculateMoves, moveDistance is: " + moveDistance);
-        }
-        return moveDistance;
-    }
-
-    private void moveTiles(Tile tile, Direction direction, boolean mergeable) {
-        System.out.println(". . . . moveTiles was reached");
-        List<Tile> subset = new ArrayList<>();
-        List<Tile> valueTiles = new ArrayList<>();
-
-        if (mergeable) {
-            System.out.println("!  ! in moveTiles, mergeable is TRUE");
-            mergeTiles(tile, direction);
-        }
-        subset = getSubset(tile.getRow(), tile.getCol(), direction);
-        valueTiles = findValueTiles(subset);
-        int numberOfValueTiles = valueTiles.size();
-        if (numberOfValueTiles > 0) {
-            System.out.println("in moveTiles, number of value tiles is: " + numberOfValueTiles);
-
-            switch (direction) {
-                case DOWN -> {
-                    for (Tile v : valueTiles) {
-                        List<Tile> reversed = subset.reversed();
-                        for (Tile t : reversed) {
-                            if ( t.getValue() == 0 && t.getRow() > v.getRow()) {
-                                switchValues(t, v);
-                            }
-                        }
-                    }
-                }
-                case LEFT -> {
-                    for (Tile v : valueTiles) {
-                        for (Tile t : subset) {
-                            if (t.getValue() == 0 && t.getCol() < v.getCol()) {
-                                switchValues(t, v);
-                            }
-                        }
-                    }
-                }
-                case RIGHT -> {
-                    for (Tile v : valueTiles) {
-                        List<Tile> reversed = subset.reversed();
-                        for (Tile t : reversed) {
-                            if (t.getValue() == 0 && t.getCol() > v.getCol()) {
-                                switchValues(t, v);
-                            }
-                        }
-                    }
-                }
-                case UP -> {
-                    for (Tile v : valueTiles) {
-                        for (Tile t : subset) {
-                            if (t.getValue() == 0 && t.getRow() < v.getRow()) {
-                                switchValues(t, v);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void mergeTiles(Tile tile, Direction direction) {
-        List <Tile> subset = getSubset(tile.getRow(), tile.getCol(), direction);
-        List<Tile> valueTiles = new ArrayList<>();
-        valueTiles = findValueTiles(subset);
-        System.out.println("mergeTiles was reached, valueTiles.size is: " + valueTiles.size());
-
-        while (valueTiles.size() > 1) {
-            Tile v = valueTiles.getFirst();
-            subset.remove(v);
-            Tile adjacent = getAdjacent(v, direction);
-            if (adjacent != null && v.getValue() != 0 && !isFinalPosition(v, direction)) {
-                if (valueTiles.size() == 2 && adjacent.getValue() == 0) {
-                    for (Tile t : subset) {
-                        if (t.getValue() == v.getValue() ) {
-                            System.out.println("------------in mergeTiles1, positions for t and adjacent are: " + t.getRow() + " " + t.getCol() + " | " + adjacent.getRow() + " " + adjacent.getCol());
-
-                            System.out.println("In mergeTiles1, old value is: " + v.getValue());
-                            int newValue = v.getValue() * 2;
-                            System.out.println("new value is: " + newValue);
-                            System.out.println("value for t is: " + t.getValue());
-                            adjustTile(t, newValue);
-                            adjustTile(v, 0);
-                            valueTiles.remove(v);
-
-                        }
-                    }
-                } else if (valueTiles.size() == 3) {
-                    for (Tile t : valueTiles) {
-                        if (t.getValue() == v.getValue() && checkIfAdjacentIsEmpty(v, direction)) {
-                            System.out.println("In mergeTiles2, old value is: " + v.getValue());
-                            int newValue = v.getValue() * 2;
-                            System.out.println("new value is: " + newValue);
-                            System.out.println("value for t is: " + t.getValue());
-                            adjustTile(t, newValue);
-                            adjustTile(v, 0);
-                        }
-                    }
-                } else if (v.getValue() == adjacent.getValue()) {
-                    System.out.println("In mergeTiles3, old value is: " + v.getValue());
-                    int newValue = v.getValue() * 2;
-                    System.out.println("new value is: " + newValue);
-                    System.out.println("value for adjacent is: " + adjacent.getValue());
-                    adjustTile(adjacent, newValue);
-                    adjustTile(v, 0);
-                }
-            }
-        }
-    }
-
-    private void switchValues(Tile t, Tile v) {
-        int newValue = t.getValue();
-        adjustTile(t, v.getValue());
-        adjustTile(v, newValue);
-    }
-
-    public void adjustTile(Tile tile, int value) {
-        System.out.println("adjustTile was reached, previous value is: " + tile.getValue() + ", new value is: " + value);
-        tile.setValue(value);
-        if (tile.getValue() > 0) {
-            tile.setBackground(Color.BLUE);
-            tile.setForeground(Color.white);
-            System.out.println("__ValueTile is adjusted, position row/col: " + tile.getRow() + " " + tile.getCol());
-            tile.setText(String.valueOf(tile.getValue()));
-            tile.repaint();
-            tile.revalidate();
-        } else if (tile.getValue() == 0){
-            tile.setBackground(Color.gray);
-            System.out.println("New empty tile is adjusted, position row/col: " + tile.getRow() + " " + tile.getCol());
-            tile.setText(String.valueOf(tile.getValue()));
-            tile.repaint();
-            tile.revalidate();
-        }
-    }
-
-    private List<Tile> findValueTiles(List<Tile> subset) {
-        List<Tile> valueTiles = new ArrayList<>();
-        for (Tile t : subset) {
-            if (t.getValue() > 0) {
-                valueTiles.add(t);
-            }
-        }
-        return valueTiles;
-    }
-    private Direction getOpposite(Direction direction) {
-        Direction d = null;
-        switch (direction) {
-            case LEFT -> {
-                d = Direction.RIGHT;
-                break;
-            }
-            case RIGHT -> {
-                d = Direction.LEFT;
-                break;
-            }
-            case UP -> {
-                d = Direction.DOWN;
-                break;
-            }
-            case DOWN -> {
-                d = Direction.UP;
-                break;
-            }
-            default -> {
-                return null;
-            }
-        }
-        return d;
-    }
 }
-
-

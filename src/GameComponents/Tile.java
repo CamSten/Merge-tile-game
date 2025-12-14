@@ -26,17 +26,22 @@ public class Tile extends JButton {
             setForeground(textColor);
         }
     }
-    public void adjustTile(Tile tile, int value){
-        System.out.println("adjustTile in Tile was reached");
+    public static void adjustTile(Tile tile, int value) {
+        System.out.println("adjustTile was reached, previous value is: " + tile.getValue() + ", new value is: " + value);
         tile.setValue(value);
-        System.out.println("in adjustTile in Tile, value is: " + tile.getValue());
-        if (tile.getValue() > 0){
-            setBackground(Color.BLUE);
-            setText(String.valueOf(tile.getValue()));
-            setForeground(Color.white);
-        }
-        else {
-            setBackground(Color.gray);
+        if (tile.getValue() > 0) {
+            tile.setBackground(Color.BLUE);
+            tile.setForeground(Color.white);
+            System.out.println("__ValueTile is adjusted, position row/col: " + tile.getRow() + " " + tile.getCol());
+            tile.setText(String.valueOf(tile.getValue()));
+            tile.repaint();
+            tile.revalidate();
+        } else if (tile.getValue() == 0){
+            tile.setBackground(Color.lightGray);
+            System.out.println("New empty tile is adjusted, position row/col: " + tile.getRow() + " " + tile.getCol());
+            tile.setText(String.valueOf(tile.getValue()));
+            tile.repaint();
+            tile.revalidate();
         }
     }
     public int getValue(){
