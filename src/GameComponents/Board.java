@@ -6,26 +6,52 @@ import java.awt.event.KeyListener;
 import java.util.*;
 import java.util.List;
 
-public class Board extends JPanel {
+public class Board extends JPanel implements Subscriber{
+    boolean win = false;
+    boolean continueAfterWin = false;
+    JPanel centerPanel;
+    JPanel topPanel;
+    JTextArea scoreDisplay;
+    Score score;
     List<Tile> tiles = new ArrayList<>();
+    List<Subscriber> subscribers = new ArrayList<>();
     int rows;
     int cols;
     int points;
     boolean full = false;
-
+    private final Game game;
     public enum Direction {
         UP, DOWN, LEFT, RIGHT;
     }
 
-    public Board(int rows, int cols) {
+    public Board(int rows, int cols, Game game) {
+        this.score = new Score(this);
+        this.game = game;
         this.rows = rows;
         this.cols = cols;
-        setLayout(new GridLayout(rows, cols));
-        setFocusable(true);
+        setLayout(new BorderLayout());
+
+        centerPanel = new JPanel();
+        topPanel = new JPanel(new FlowLayout());
+
+        centerPanel.setLayout(new GridLayout(rows, cols));
+        centerPanel.setFocusable(true);
+        centerPanel.setEnabled(true);
         getStartingTiles();
         for (Tile tile : tiles) {
-            add(tile);
+            centerPanel.add(tile);
         }
+
+        centerPanel.setVisible(true);
+        topPanel.setVisible(true);
+        JLabel scoreLabel = new JLabel("Score: ");
+        this.scoreDisplay = new JTextArea("");
+        topPanel.add(scoreLabel);
+        topPanel.add(scoreDisplay);
+        scoreDisplay.setEditable(false);
+        add(topPanel, BorderLayout.NORTH);
+        add(centerPanel, BorderLayout.CENTER);
+
         setCoordinates();
         addKeyListener(new KeyListener() {
             @Override
@@ -72,28 +98,45 @@ public class Board extends JPanel {
         }
     }
 
+    @Override
+    public void update(EventType e, Object o) {
+        notifySubscribers(e, o);
+    }
+    public void subscribe(Subscriber s){
+        subscribers.add(s);
+
+    }
+    public void unSubscribe(Subscriber s){
+        subscribers.remove(s);
+    }
+
+    private void notifySubscribers(EventType e, Object o){
+        for(Subscriber s: subscribers){
+            s.update(e, o);
+        }
+    }
     private boolean completed() {
+        System.out.println("in Board, completed is checked");
         int numberOfValueTiles = 0;
         for (Tile t : tiles) {
-            if (t.getValue() == 0) {
+            if (t.getValue() > 0) {
                 numberOfValueTiles += 1;
             }
         }
+        System.out.println("in Board completed: numberOfValueTiles is: " + numberOfValueTiles);
         return numberOfValueTiles == tiles.size();
     }
 
     private void addTile() {
         Random random = new Random();
         List<Tile> emptyTiles = new ArrayList<>();
-        if (!completed()) {
-            for (Tile t : tiles) {
-                if (t.getValue() == 0) {
-                    emptyTiles.add(t);
-                }
+        for (Tile t : tiles) {
+            if (t.getValue() == 0) {
+                emptyTiles.add(t);
             }
-            Tile randomTile = emptyTiles.get(random.nextInt(emptyTiles.size()));
-            Tile.adjustTile(randomTile, getStartingValue());
         }
+        Tile randomTile = emptyTiles.get(random.nextInt(emptyTiles.size()));
+        Tile.adjustTile(randomTile, getStartingValue());
     }
 
     private void getStartingTiles() {
@@ -136,27 +179,29 @@ public class Board extends JPanel {
             if (reversed) {
                 Collections.reverse(mergedValues);
             }
-                allAdjustedValues.add(mergedValues);
+            allAdjustedValues.add(mergedValues);
         }
 
         if(hasValuesChanged(allSubsetValues, allAdjustedValues)) {
-            if (!completed()) {
-                for (int i = 0; i < allAdjustedValues.size(); i++) {
-                    List<Tile> subset = allTileSubsets.get(i);
-                    List<Integer> adjustedValues = allAdjustedValues.get(i);
+            for (int i = 0; i < allAdjustedValues.size(); i++) {
+                List<Tile> subset = allTileSubsets.get(i);
+                List<Integer> adjustedValues = allAdjustedValues.get(i);
 
-                    for (int j = 0; j < adjustedValues.size(); j++) {
-                        Tile.adjustTile(subset.get(j), adjustedValues.get(j));
-                        if (adjustedValues.get(j) == 2048){
-                            gameOverActions();
-                        }
+                for (int j = 0; j < adjustedValues.size(); j++) {
+                    Tile.adjustTile(subset.get(j), adjustedValues.get(j));
+                    if (adjustedValues.get(j) == 2048 && continueAfterWin == false){
+                        gameOverActions();
                     }
                 }
-                addTile();
             }
-            else {
-                gameOverActions();
-            }
+
+        }
+        if(!completed()){
+            addTile();
+        }
+        else {
+            System.out.println("in assessMovement, gameOverActions is called");
+            gameOverActions();
         }
     }
     private boolean hasValuesChanged(List<List<Integer>> allSubsetValues, List<List<Integer>>  allAdjustedValues){
@@ -204,6 +249,7 @@ public class Board extends JPanel {
             for (int i = 0; i < nonZeroValues.size(); i++) {
                 if (i < nonZeroValues.size() -1 && nonZeroValues.get(i).equals(nonZeroValues.get(i + 1))) {
                     adjustedValues.add((nonZeroValues.get(i)) * 2);
+                    update(EventType.NEW_SCORE, (nonZeroValues.get(i) * 2));
                     i++;
                 } else {
                     adjustedValues.add(nonZeroValues.get(i));
@@ -275,16 +321,28 @@ public class Board extends JPanel {
         }
         return tileSubsets;
     }
-    private void gameOverActions(){
-        boolean win = false;
-        for (Tile t : tiles){
-            if (t.getValue() == 2048){
-                win = true;
+    private void gameOverActions() {
+        System.out.println("gameOverActions in Board was reached");
+        if (win == false){
+            for (Tile t : tiles) {
+                if (t.getValue() == 2048) {
+                    win = true;
+                }
             }
         }
-        if (win){
-
+        if (continueAfterWin) {
+            win = false;
         }
-
+        game.gameOverActions(win);
+    }
+    protected void displayScore(EventType e, int score){
+        if(e == EventType.DISPLAY_SCORE){
+            scoreDisplay.setText(String.valueOf(score));
+        }
+    }
+    protected void updateContinueGame(EventType e){
+        if (e == EventType.CONTINUE_GAME){
+            continueAfterWin = true;
+        }
     }
 }

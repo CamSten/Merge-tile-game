@@ -1,15 +1,17 @@
 package GameComponents;
 
+import GUI.EndPanel;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class Game extends JFrame {
+    Board board;
     private static int rows = 4;
     private static int cols = 4;
-    private static Board board = new Board(rows, cols);
-    private JPanel centerPanel;
+    private static JPanel centerPanel;
     private JPanel topPanel;
     private JPanel bottomPanel;
     private Color backgroundColor = Color.darkGray;
@@ -18,15 +20,16 @@ public class Game extends JFrame {
     public Game(int rows, int cols) {
         this.rows = rows;
         this.cols = cols;
-        board.requestFocusInWindow();
+
         setVisible(true);
         setLayout(new BorderLayout());
+        setEnabled(true);
         setMinimumSize(new Dimension(500, 600));
         setBackground(backgroundColor);
         centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBackground(backgroundColor);
-        centerPanel.add(board, BorderLayout.CENTER);
-        add(centerPanel, BorderLayout.CENTER);
+
+        showMainMenu();
 
         JTextArea points = new JTextArea();
         points.setVisible(true);
@@ -36,6 +39,48 @@ public class Game extends JFrame {
         topPanel.setBackground(backgroundColor);
         topPanel.setVisible(true);
         add(topPanel, BorderLayout.NORTH);
+
+        repaint();
+        revalidate();
+        pack();
+    }
+    public void showMainMenu(){
+        JButton startGame = new JButton("Start new game");
+        startGame.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                startNewGame();            }
+        });
+
+        JButton seeHighscores = new JButton("Highscores");
+        seeHighscores.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            }
+        });
+
+        JButton savedGame = new JButton("SavedGame");
+        savedGame.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            }
+        });
+
+        JPanel menuButtons = new JPanel(new GridLayout(3, 1));
+        menuButtons.add(startGame);
+        menuButtons.add(savedGame);
+        menuButtons.add(seeHighscores);
+
+        centerPanel.add(menuButtons, BorderLayout.CENTER);
+        add(centerPanel, BorderLayout.CENTER);
+    }
+
+    public void startNewGame(){
+        centerPanel.removeAll();
+        this.board = new Board(rows, cols, this);
+        board.setVisible(true);
+        centerPanel.add(board, BorderLayout.CENTER);
+        board.requestFocusInWindow();
 
         JButton quitButton = new JButton("Quit game");
         quitButton.setForeground(foregroundColor);
@@ -55,17 +100,34 @@ public class Game extends JFrame {
         revalidate();
         pack();
     }
-
-    private void moveTiles(Tile tile, Board.Direction direction){
-
+    public  void gameOverActions(boolean win){
+        System.out.println("gameOverActions was reached");
+        boolean remove = false;
+        if (win){
+            int choice = JOptionPane.showOptionDialog(null, "Game won", "You won! Would you like to keep on playing?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new Object[]{"Yes", "No"}, "Yes");
+            if (choice ==1){
+                remove = true;
+            }
+            else {
+                board.updateContinueGame(Subscriber.EventType.CONTINUE_GAME);
+                win = false;
+            }
+        }
+        else {
+            remove = true;
+        }
+        if (remove) {
+            updateCenterPanel();
+        }
     }
-
-    private void mergeTiles(Tile tile, Board.Direction direction){
-
+    private void updateCenterPanel(){
+        centerPanel.removeAll();
+        System.out.println("updateCenterPanel was reached");
+        GUI.EndPanel endPanel = new EndPanel(this);
+        centerPanel.add(endPanel, BorderLayout.CENTER);
     }
+    public void backToMainMenu(){
 
-    private Tile getAdjacent(Tile tile, Board.Direction direction){
-return tile;
     }
 }
 
