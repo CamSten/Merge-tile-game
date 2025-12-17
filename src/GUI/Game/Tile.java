@@ -1,4 +1,4 @@
-package GameComponents;
+package GUI.Game;
 
 import javax.swing.*;
 import java.awt.*;

@@ -1,17 +1,14 @@
 package GUI;
 
-import GameComponents.Board;
-import GameComponents.Game;
+import Infrastructure.Subscriber;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class EndPanel extends JPanel {
-    private Game game;
-    public EndPanel(Game game){
-        this.game = game;
+public class EndPanel extends JPanel implements Subscriber {
+    public EndPanel(){
 
         setLayout(new BorderLayout());
         JTextArea endMessage = new JTextArea("Game over");
@@ -20,14 +17,14 @@ public class EndPanel extends JPanel {
         newGame.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                game.startNewGame();
+                update(EventType.NEW_GAME, null);
             }
         });
         JButton backToMenu = new JButton("Return to main menu");
         newGame.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                game.backToMainMenu();
+                update(EventType.ADD_MENU_PANEL, null);
             }
         });
 
@@ -37,5 +34,10 @@ public class EndPanel extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
         setVisible(true);
         add(endMessage, BorderLayout.CENTER);
+    }
+
+    @Override
+    public void update(EventType e, Object data) {
+
     }
 }

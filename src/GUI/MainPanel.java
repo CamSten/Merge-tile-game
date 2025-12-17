@@ -1,14 +1,19 @@
-package GameComponents;
+package GUI;
 
-import GUI.EndPanel;
+import GUI.Game.Board;
+import GameComponents.GameSession;
+import Server.Database.Highscores;
+import Infrastructure.Subscriber;
+import Server.Database.User;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Game extends JFrame {
-    Board board;
+public class MainPanel extends JFrame implements Subscriber {
     private static int rows = 4;
     private static int cols = 4;
     private static JPanel centerPanel;
@@ -16,8 +21,12 @@ public class Game extends JFrame {
     private JPanel bottomPanel;
     private Color backgroundColor = Color.darkGray;
     private Color foregroundColor = Color.lightGray;
+    private User user;
+    private GameSession game;
+    List<Subscriber> subscribers;
 
-    public Game(int rows, int cols) {
+    public MainPanel (User user, int rows, int cols) {
+        this.user = user;
         this.rows = rows;
         this.cols = cols;
 
@@ -28,6 +37,7 @@ public class Game extends JFrame {
         setBackground(backgroundColor);
         centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBackground(backgroundColor);
+        add(centerPanel, BorderLayout.CENTER);
 
         showMainMenu();
 
@@ -49,13 +59,15 @@ public class Game extends JFrame {
         startGame.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                startNewGame();            }
+                startNewGame();
+            }
         });
 
         JButton seeHighscores = new JButton("Highscores");
         seeHighscores.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                showHighscorePanel();
             }
         });
 
@@ -72,25 +84,14 @@ public class Game extends JFrame {
         menuButtons.add(seeHighscores);
 
         centerPanel.add(menuButtons, BorderLayout.CENTER);
-        add(centerPanel, BorderLayout.CENTER);
-    }
-
-    public void startNewGame(){
-        centerPanel.removeAll();
-        this.board = new Board(rows, cols, this);
-        board.setVisible(true);
-        centerPanel.add(board, BorderLayout.CENTER);
-        board.requestFocusInWindow();
-
         JButton quitButton = new JButton("Quit game");
-        quitButton.setForeground(foregroundColor);
+
         quitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JOptionPane.showOptionDialog(null, "Quit game", "Are you sure you want to exit the game?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new Object[]{"Yes", "No"}, "No");
             }
         });
-
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setVisible(true);
         bottomPanel.setBackground(backgroundColor);
@@ -100,34 +101,79 @@ public class Game extends JFrame {
         revalidate();
         pack();
     }
-    public  void gameOverActions(boolean win){
-        System.out.println("gameOverActions was reached");
-        boolean remove = false;
-        if (win){
-            int choice = JOptionPane.showOptionDialog(null, "Game won", "You won! Would you like to keep on playing?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new Object[]{"Yes", "No"}, "Yes");
-            if (choice ==1){
-                remove = true;
-            }
-            else {
-                board.updateContinueGame(Subscriber.EventType.CONTINUE_GAME);
-                win = false;
-            }
-        }
-        else {
-            remove = true;
-        }
-        if (remove) {
-            updateCenterPanel();
+    private void showGameBoard(Board board){
+       System.out.println("in mainPanel, showGameBoard is reached");
+        centerPanel.removeAll();
+        if(board!= null) {
+            System.out.println("in MainPanel, board is not null");
+            centerPanel.add(board, BorderLayout.CENTER);
+            board.setEnabled(true);
+            board.setFocusable(true);
+            repaint();
+            revalidate();
+            pack();
+            SwingUtilities.invokeLater(board::requestFocusInWindow);
         }
     }
-    private void updateCenterPanel(){
+
+    private void showEndPanel(){
         centerPanel.removeAll();
         System.out.println("updateCenterPanel was reached");
-        GUI.EndPanel endPanel = new EndPanel(this);
+        EndPanel endPanel = new EndPanel();
         centerPanel.add(endPanel, BorderLayout.CENTER);
     }
     public void backToMainMenu(){
+        centerPanel.removeAll();
+        showMainMenu();
+    }
+    private void showHighscorePanel(){
+        centerPanel.removeAll();
+        List<String> scores =  Highscores.getScorePrintout();
+        HighscorePanel highscorePanel = new HighscorePanel(scores);
+        centerPanel.add(highscorePanel, BorderLayout.CENTER);
+    }
 
+    private void startNewGame(){
+        game = new GameSession(this, user);
+        game.subscribe(this);
+        notifySubscribers(EventType.START, null);
+    }
+    private void notifySubscribers(EventType e, Object o){
+        for (Subscriber s : subscribers){
+            System.out.println("in MainPanel, subscribers are:" + s.getClass());
+            s.update(e, o);
+        }
+    }
+
+    protected void saveScore(int score){
+        System.out.println("In Game, score is: " + score);
+        Highscores.saveScore(user, score);
+    }
+
+    public void subscribe(Subscriber s){
+        if (subscribers == null) {
+            subscribers = new ArrayList<>();
+        }
+        subscribers.add(s);
+    }
+
+    @Override
+    public void update(EventType e, Object data) {
+        System.out.println("update in MainPanel is reached. eventtype is: " + e);
+        if (e == EventType.ADD_GAME_PANEL){
+            Board gameBoard = (Board) data;
+            showGameBoard(gameBoard);
+        }
+        else if (e == EventType.ADD_END_PANEL){
+            showEndPanel();
+        }
+        else if (e == EventType.ADD_MENU_PANEL){
+            backToMainMenu();
+        }
+        else if (e == EventType.START){
+            Board board = (Board) data;
+            showGameBoard(board);
+        }
     }
 }
 

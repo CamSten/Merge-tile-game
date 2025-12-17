@@ -1,22 +1,22 @@
 package GameComponents.Moves;
-import GameComponents.Board;
-import GameComponents.Subscriber;
+import GameComponents.GameSession;
+import Infrastructure.Subscriber;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Move {
-    private Board board;
+    private GameSession game;
     private List<List<Integer>> allBoardSubsets;
-    private List<Integer> allValues;
+    private List<Integer> adjustedValues;
     int rows;
     int cols;
 
-    public Move(Board board, List<List<Integer>> allBoardSubsets) {
-        this.board = board;
+    public Move(GameSession game, List<List<Integer>> allBoardSubsets) {
+        this.game = game;
         this.allBoardSubsets = allBoardSubsets;
-        this.rows = board.getRows();
-        this.cols = board.getCols();
+        this.rows = game.getRows();
+        this.cols = game.getCols();
     }
 
     public void assessMovement(boolean reversed, boolean horizontal) {
@@ -42,7 +42,7 @@ public class Move {
             allAdjustedValues = getCorrectOrder(allAdjustedValues);
         }
         MoveResult moveResult = new MoveResult(allAdjustedValues, changedValues, completed, hasReached2048, continueAfter2048);
-        board.updateBoard(moveResult);
+        game.update(Subscriber.EventType.UPDATE_VALUES, moveResult);
     }
     private List<Integer> getAdjustedValues(List<Integer> subset) {
         List<Integer> adjustedValues = new ArrayList<>();
@@ -58,8 +58,7 @@ public class Move {
             for (int i = 0; i < nonZeroValues.size(); i++) {
                 if (i < nonZeroValues.size() - 1 && nonZeroValues.get(i).equals(nonZeroValues.get(i + 1))) {
                     adjustedValues.add((nonZeroValues.get(i)) * 2);
-                    board.update(Subscriber.EventType.NEW_SCORE, (nonZeroValues.get(i) * 2));
-                    System.out.println("--------------------in MOVE, getAdjustedValues, score is updated");
+                    game.update(Subscriber.EventType.NEW_SCORE, (nonZeroValues.get(i) * 2));
                     i++;
                 } else {
                     adjustedValues.add(nonZeroValues.get(i));
@@ -69,6 +68,7 @@ public class Move {
         while (adjustedValues.size() < subset.size()) {
             adjustedValues.add(0);
         }
+        this.adjustedValues = adjustedValues;
         return adjustedValues;
     }
     private List<List<Integer>> getCorrectOrder(List<List<Integer>> adjustedValues){
@@ -140,7 +140,19 @@ public class Move {
         }
     }
 
-    private boolean isCompleted() {
+    private boolean isCompleted(){
+        if (isFull()) {
+            System.out.println("----------------------in Move, full is true");
+            for (int i = 0; i < adjustedValues.size(); i++) {
+                if (i < adjustedValues.size() - 1 && adjustedValues.get(i).equals(adjustedValues.get(i + 1))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    private boolean isFull() {
+        System.out.println("______________ isFull in Move is reached");
         int numberOfValueTiles = 0;
         for (List<Integer> l : allBoardSubsets) {
             for (Integer i : l) {
