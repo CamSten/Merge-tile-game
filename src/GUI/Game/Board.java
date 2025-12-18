@@ -24,15 +24,12 @@ public class Board extends JPanel implements Subscriber {
     List<Subscriber> subscribers;
     int rows = 4;
     int cols = 4;
-    private final GameSession game;
 
-    public Board(GameSession game) {
+    public Board() {
         System.out.println("BOARD constructor was reached");
 //        this.totalScore = new Score(this);
-        this.game = game;
         this.subscribers = new ArrayList<>();
         setLayout(new BorderLayout());
-        game.subscribe(this);
 
         centerPanel = new JPanel();
         topPanel = new JPanel(new FlowLayout());
@@ -99,7 +96,7 @@ public class Board extends JPanel implements Subscriber {
             }
         }
     }
-    protected void updateTileBoard(List<List<Integer>> values){
+    public void updateTileBoard(List<List<Integer>> values){
         System.out.println("       UPDATE TILEBOARD IN BOARD WAS REACHED");
         List<Integer> allValues = new ArrayList<>();
         for (List<Integer> l : values){
@@ -111,7 +108,7 @@ public class Board extends JPanel implements Subscriber {
         repaint();
         revalidate();
     }
-    protected void updateScoreDisplay(EventType e, Object o){
+    public void updateScoreDisplay(EventType e, Object o){
         if(e == EventType.DISPLAY_SCORE && o instanceof Integer i){
             System.out.println("D I S P L A Y S C O R E IS REACHED. values is: " + i);
             setScore(i);

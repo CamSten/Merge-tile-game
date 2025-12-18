@@ -17,7 +17,7 @@ public class EndPanel extends JPanel implements Subscriber {
         newGame.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                update(EventType.NEW_GAME, null);
+                update(EventType.REQUEST_NEW_GAME, null);
             }
         });
         JButton backToMenu = new JButton("Return to main menu");

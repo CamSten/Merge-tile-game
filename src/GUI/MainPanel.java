@@ -2,6 +2,8 @@ package GUI;
 
 import GUI.Game.Board;
 import GameComponents.GameSession;
+import Infrastructure.AppManager;
+import Infrastructure.GameManager;
 import Server.Database.Highscores;
 import Infrastructure.Subscriber;
 import Server.Database.User;
@@ -13,10 +15,13 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static Infrastructure.Subscriber.EventType.DISPLAY_SCORE;
+
 public class MainPanel extends JFrame implements Subscriber {
     private static int rows = 4;
     private static int cols = 4;
     private static JPanel centerPanel;
+    private Board board;
     private JPanel topPanel;
     private JPanel bottomPanel;
     private Color backgroundColor = Color.darkGray;
@@ -24,8 +29,10 @@ public class MainPanel extends JFrame implements Subscriber {
     private User user;
     private GameSession game;
     List<Subscriber> subscribers;
+    private AppManager manager;
 
-    public MainPanel (User user, int rows, int cols) {
+    public MainPanel (User user, AppManager manager) {
+        this.manager = manager;
         this.user = user;
         this.rows = rows;
         this.cols = cols;
@@ -59,7 +66,8 @@ public class MainPanel extends JFrame implements Subscriber {
         startGame.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                startNewGame();
+                manager.startGame(user);
+                update(EventType.REQUEST_NEW_GAME, board);
             }
         });
 
@@ -101,20 +109,7 @@ public class MainPanel extends JFrame implements Subscriber {
         revalidate();
         pack();
     }
-    private void showGameBoard(Board board){
-       System.out.println("in mainPanel, showGameBoard is reached");
-        centerPanel.removeAll();
-        if(board!= null) {
-            System.out.println("in MainPanel, board is not null");
-            centerPanel.add(board, BorderLayout.CENTER);
-            board.setEnabled(true);
-            board.setFocusable(true);
-            repaint();
-            revalidate();
-            pack();
-            SwingUtilities.invokeLater(board::requestFocusInWindow);
-        }
-    }
+
 
     private void showEndPanel(){
         centerPanel.removeAll();
@@ -133,34 +128,25 @@ public class MainPanel extends JFrame implements Subscriber {
         centerPanel.add(highscorePanel, BorderLayout.CENTER);
     }
 
-    private void startNewGame(){
-        game = new GameSession(this, user);
-        game.subscribe(this);
-        notifySubscribers(EventType.START, null);
-    }
-    private void notifySubscribers(EventType e, Object o){
-        for (Subscriber s : subscribers){
-            System.out.println("in MainPanel, subscribers are:" + s.getClass());
-            s.update(e, o);
+    private void showGameBoard(Object object){
+        if (object instanceof Board board) {
+            System.out.println("in mainPanel, showGameBoard is reached");
+            centerPanel.removeAll();
+            this.board = board;
+            System.out.println("in MainPanel, board is not null");
+            centerPanel.add(board, BorderLayout.CENTER);
+            board.setEnabled(true);
+            board.setFocusable(true);
+            repaint();
+            revalidate();
+            pack();
+            SwingUtilities.invokeLater(board::requestFocusInWindow);
         }
     }
-
-    protected void saveScore(int score){
-        System.out.println("In Game, score is: " + score);
-        Highscores.saveScore(user, score);
-    }
-
-    public void subscribe(Subscriber s){
-        if (subscribers == null) {
-            subscribers = new ArrayList<>();
-        }
-        subscribers.add(s);
-    }
-
     @Override
     public void update(EventType e, Object data) {
         System.out.println("update in MainPanel is reached. eventtype is: " + e);
-        if (e == EventType.ADD_GAME_PANEL){
+        if (e == EventType.ADD_GAME_PANEL || e == EventType.REQUEST_NEW_GAME){
             Board gameBoard = (Board) data;
             showGameBoard(gameBoard);
         }
@@ -170,10 +156,14 @@ public class MainPanel extends JFrame implements Subscriber {
         else if (e == EventType.ADD_MENU_PANEL){
             backToMainMenu();
         }
-        else if (e == EventType.START){
-            Board board = (Board) data;
-            showGameBoard(board);
+        else if (e == EventType.UPDATE_TILES){
+            List<List<Integer>> values = (List<List<Integer>>) data;
+
+            board.updateTileBoard(values);
         }
+        }
+    private void updateBoard(){
+
     }
 }
 

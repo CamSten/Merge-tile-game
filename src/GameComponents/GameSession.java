@@ -3,6 +3,7 @@ import GUI.Game.Board;
 import GUI.MainPanel;
 import GUI.Game.Tile;
 import GameComponents.Moves.*;
+import Infrastructure.GameMediator;
 import Infrastructure.Subscriber;
 import Server.Database.Highscores;
 import Server.Database.User;
@@ -26,18 +27,21 @@ public class GameSession implements Subscriber {
     int cols = 4;
     MoveStrategy moveStrategy = null;
 
-    public GameSession(MainPanel mainPanel, User user){
+    public GameSession(User user){
         this.user = user;
-        mainPanel.subscribe(this);
-    }
-    private void start(){
-        board = new Board(this);
+        board = new Board();
         subscribe(board);
         board.subscribe(this);
         getStartingTiles();
+        GameMediator mediator = GameMediator.getInstance();
+        mediator.update(EventType.ADD_GAME_PANEL, board);
+        mediator.update(EventType.UPDATE_TILES, allTileValues);
+    }
+    private void start(){
+        System.out.println("GameSession start was reached");
+
+
         System.out.println("getStartingTiles was reached");
-        notifySubscribers(EventType.ADD_GAME_PANEL, board);
-        notifySubscribers(EventType.UPDATE_TILES, allTileValues);
     }
 
     public void assessKeyAction(char c){
@@ -74,9 +78,10 @@ public class GameSession implements Subscriber {
 
     @Override
     public void update(EventType e, Object o) {
+        System.out.println("update in GameSession is reached. Eventtype is: " + e);
         if (e != null){
             switch (e){
-                case START: {
+                case REQUEST_NEW_GAME: {
                     start();
                 }
                 case KEY_ACTION: {
@@ -89,10 +94,8 @@ public class GameSession implements Subscriber {
                         checkUpdatedTileValues(result);
                     }
                 }
-                case DISPLAY_SCORE: {
-                    if (o instanceof Integer points) {
-                       notifySubscribers(EventType.DISPLAY_SCORE, points);
-                    }
+                case UPDATE_TILES: {
+
                 }
             }
         }
@@ -154,6 +157,7 @@ public class GameSession implements Subscriber {
             }
     }
     private void getStartingTiles() {
+        System.out.println("in GameSession, getStartingTiles was reached");
         setCoordinates();
         List<List<Integer>> allTileValues = new ArrayList<>();
         for (int i = 0; i < rows; i++){
@@ -175,7 +179,7 @@ public class GameSession implements Subscriber {
         valueSubsetTwo.add(startValueTwo);
         Collections.shuffle(valueSubsetTwo);
 
-        notifySubscribers(EventType.UPDATE_TILES, allTileValues);
+        update(EventType.UPDATE_TILES, allTileValues);
     }
 
     private void setCoordinates() {
@@ -245,5 +249,9 @@ public class GameSession implements Subscriber {
     protected void saveScore(int score){
         System.out.println("In Game, score is: " + score);
         Highscores.saveScore(user, score);
+    }
+
+    public Board  getBoard() {
+        return board;
     }
 }
