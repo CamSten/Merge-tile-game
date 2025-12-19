@@ -7,13 +7,15 @@ public class MoveResult {
     private boolean full;
     private boolean reached2048;
     private boolean continueAfterWin;
+    private int points;
 
-    public MoveResult(List<List<Integer>> newValues, boolean changedValues, boolean full, boolean reached2048, boolean continueAfterWin){
+    public MoveResult(List<List<Integer>> newValues, boolean changedValues, boolean full, boolean reached2048, boolean continueAfterWin, int points){
         this.newValues = newValues;
         this.changedValues = changedValues;
         this.full = full;
         this.reached2048 = reached2048;
         this.continueAfterWin = continueAfterWin;
+        this.points = points;
     }
     public  List<List<Integer>> getNewValues (){
         return newValues;
@@ -31,5 +33,8 @@ public class MoveResult {
     }
     public boolean doContinueAfterWin(){
         return continueAfterWin;
+    }
+    public int getPoints(){
+        return points;
     }
 }

@@ -1,16 +1,19 @@
 package GameComponents.Moves;
 import GameComponents.GameSession;
+import Infrastructure.GameMediator;
 import Infrastructure.Subscriber;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Move {
+    private GameMediator mediator = GameMediator.getInstance();
     private GameSession game;
     private List<List<Integer>> allBoardSubsets;
     private List<Integer> adjustedValues;
     int rows;
     int cols;
+    private int points;
 
     public Move(GameSession game, List<List<Integer>> allBoardSubsets) {
         this.game = game;
@@ -41,8 +44,8 @@ public class Move {
         if(!horizontal){
             allAdjustedValues = getCorrectOrder(allAdjustedValues);
         }
-        MoveResult moveResult = new MoveResult(allAdjustedValues, changedValues, completed, hasReached2048, continueAfter2048);
-        game.update(Subscriber.EventType.UPDATE_VALUES, moveResult);
+        MoveResult moveResult = new MoveResult(allAdjustedValues, changedValues, completed, hasReached2048, continueAfter2048, points);
+        mediator.update(Subscriber.EventType.NEW_UNCHECKED_VALUES, moveResult);
     }
     private List<Integer> getAdjustedValues(List<Integer> subset) {
         List<Integer> adjustedValues = new ArrayList<>();
@@ -58,12 +61,14 @@ public class Move {
             for (int i = 0; i < nonZeroValues.size(); i++) {
                 if (i < nonZeroValues.size() - 1 && nonZeroValues.get(i).equals(nonZeroValues.get(i + 1))) {
                     adjustedValues.add((nonZeroValues.get(i)) * 2);
-                    game.update(Subscriber.EventType.NEW_SCORE, (nonZeroValues.get(i) * 2));
+                    setPoints(nonZeroValues.get(i) * 2);
                     i++;
                 } else {
                     adjustedValues.add(nonZeroValues.get(i));
                 }
             }
+            mediator.update(Subscriber.EventType.RETURN_NEW_SCORE, points);
+            System.out.println("in Move, points is: " + points);
         }
         while (adjustedValues.size() < subset.size()) {
             adjustedValues.add(0);
@@ -162,5 +167,8 @@ public class Move {
             }
         }
         return numberOfValueTiles == rows * cols;
+    }
+    private void setPoints(int value){
+        this.points += value;
     }
 }

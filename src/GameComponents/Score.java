@@ -1,22 +1,28 @@
 package GameComponents;
 
+import Infrastructure.GameMediator;
 import Infrastructure.Subscriber;
+import Server.Database.User;
 
 public class Score implements Subscriber {
+    private GameMediator mediator = GameMediator.getInstance();
     private int totalScore = 0;
     private GameSession game;
+    User user;
 
     public Score(GameSession game){
         this.game = game;
-        game.subscribe(this);
+        this.user = game.getUser();
+        this.totalScore = game.getTotalPoints();
+
     }
 
     @Override
     public void update(EventType e, Object o) {
         System.out.println(" UPDATE IN SCORE IS REACHED");
-        if(e == EventType.NEW_SCORE && o != null){
+        if(e == EventType.REQUEST_NEW_SCORE && o != null){
             calculateScore(o);
-            game.update(EventType.DISPLAY_SCORE, totalScore);
+            mediator.update(EventType.RETURN_DISPLAY_SCORE, totalScore);
             System.out.println("In Score, score is: " + totalScore);
         }
     }
@@ -32,5 +38,8 @@ public class Score implements Subscriber {
 
     public int getTotalScore() {
         return totalScore;
+    }
+    public User getUser(){
+        return user;
     }
 }

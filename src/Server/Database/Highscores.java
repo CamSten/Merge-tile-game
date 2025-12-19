@@ -1,5 +1,9 @@
 package Server.Database;
 
+import GameComponents.Score;
+import Infrastructure.GameMediator;
+import Infrastructure.Subscriber;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -13,15 +17,37 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Highscores {
+public class Highscores implements Subscriber {
+    GameMediator mediator = GameMediator.getInstance();
     static List<String> scoreList = new ArrayList<>();
     private int score;
     private static final int maxSavedScores = 25;
-    private enum scoreValue {NAME, MOVES, DATE }
+    public enum ScoreValue {NAME, POINTS, DATE }
+    public ScoreValue scoreValue;
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy HH:mm");
 
-    public Highscores(User user, int score) {
+    public Highscores() {
+        mediator.subscribe(this);
+        System.out.println("Highscores constructor is reached");
+    }
+    @Override
+    public void update(EventType e, Object data) {
+        System.out.println("update in Highscores was reached");
+        if (e == EventType.REQUEST_SAVE_SCORE){
+            Score newScore = (Score) data;
+            saveScore(newScore.getUser(), newScore.getTotalScore());
+        }
+        else if (e == EventType.REQUEST_ALL_HIGHSCORES){
+            ScoreValue scoreValue = (ScoreValue) data;
+            sendHighscores(scoreValue);
+        }
+    }
 
+    private void sendHighscores(ScoreValue scoreValue){
+        readSaveFile();
+        List<String[]> scorePrintout = getScorePrintout();
+        HighscorePrintout highscorePrintout = new HighscorePrintout(scorePrintout, scoreValue);
+        mediator.update(EventType.RETURN_ALL_HIGHSCORES, highscorePrintout);
     }
     public int getScore() {
         return score;
@@ -30,7 +56,7 @@ public class Highscores {
         return Integer.toString(score);
     }
     private static Path getPath() {
-        Path path = Paths.get("src/GameComponents/Scores.txt");
+        Path path = Paths.get("src/Server/Database/Scores.txt");
         if (!Files.exists(path)) {
             try {
                 Files.createFile(path);
@@ -42,15 +68,23 @@ public class Highscores {
     }
 
     private List<String> readSaveFile() {
-        scoreList.clear();
+        if (scoreList.isEmpty()){
+            scoreList = new ArrayList<>();}
+        else {
+            scoreList.clear();
+        }
         Path saveFile = getPath();
         String score;
         try (BufferedReader reader = new BufferedReader(new FileReader(saveFile.toFile()))) {
             while ((score = reader.readLine()) != null) {
+                System.out.print("score in scoreList is: " + score);
                 scoreList.add(score);
             }
         } catch (Exception e) {
             System.out.println(errorFileRead);
+        }
+        for (String s : scoreList){
+            System.out.println("saved score: " + s);
         }
         return scoreList;
     }
@@ -77,48 +111,14 @@ public class Highscores {
         }
         return savedMoves;
     }
-    public static List<String> getScorePrintout(){
-        List<String>allScorePrintouts = new ArrayList<>();
+    public List<String[]> getScorePrintout(){
+        List<String[]> result = new ArrayList<>();
         List<String[]> scoreValues = splitScoreString();
-        String printout = "";
-        int start;
-        int end;
-        int step;
-        if (!scoreValues.isEmpty()) {
-            for (int type = 0; type <= 2; type++) {
-                if (type == 2) {
-                    start = scoreValues.size() - 1;
-                    end = -1;
-                    step = -1;
-                } else {
-                    start = 0;
-                    end = scoreValues.size();
-                    step = 1;
-                }
-                for (int i = start; i != end; i += step) {
-                    type = i;
-                    String whatToPrint = "";
-                    switch (type) {
-                        case 0: {
-                            whatToPrint = scoreValues.get(i)[0];
 
-                            break;
-                        }
-                        case 1: {
-                            whatToPrint = scoreValues.get(i)[1];
-                            break;
-                        }
-                        case 2: {
-                            whatToPrint = scoreValues.get(i)[2];
-                            break;
-                        }
-                    }
-                    printout = printout + whatToPrint + "\n";
-                    allScorePrintouts.add(whatToPrint);
-                }
-            }
+        for (String[] s : scoreValues) {
+            result.add(new String[]{ s[0], s[1], s[2] });
         }
-        return allScorePrintouts;
+        return result;
     }
 
     private static void removeScore(){
@@ -137,53 +137,7 @@ public class Highscores {
             e.printStackTrace();
         }
     }
-    public void sortList (scoreValue type){
-        List<String[]> values = splitScoreString();
-        boolean changePlace = false;
-        if (!values.isEmpty()) {
 
-            for (int pass = 0; pass < values.size() -1; pass++) {
-                for (int i = 1; i < values.size() - pass; i++) {
-                    switch (type) {
-                        case NAME: {
-                            String score1 = values.get(i)[0];
-                            String score2 = values.get(i - 1)[0];
-                            changePlace = score1.compareToIgnoreCase(score2) < 0;
-                            break;
-                        }
-                        case MOVES: {
-                            int score1 = Integer.parseInt(values.get(i)[1].trim());
-                            int score2 = Integer.parseInt(values.get(i - 1)[1].trim());
-                            changePlace =  score2 > score1;
-                            break;
-                        }
-                        case DATE: {
-                            LocalDateTime score1 = LocalDateTime.parse(values.get(i)[2], formatter);
-                            LocalDateTime score2 = LocalDateTime.parse(values.get(i - 1)[2], formatter);
-                            changePlace = score2.isAfter(score1);
-                            break;
-                        }
-                    }
-                    if (changePlace) {
-                        String[] temp = values.get(i-1);
-                        values.set(i-1, values.get(i));
-                        values.set(i, temp);
-                    }
-                }
-            }
-        }
-        scoreList.clear();
-        for (String [] score : values) {
-            StringBuilder sb = new StringBuilder();
-            for (int j = 0; j < score.length; j++) {
-                sb.append(score[j]);
-                if (j < score.length -1){
-                    sb.append(";");
-                }
-            }
-            scoreList.add(sb.toString());
-        }
-    }
     public void clearSavedScores(){
         scoreList.clear();
         Path saveFile = getPath();

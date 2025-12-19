@@ -1,7 +1,8 @@
 package GUI.Game;
-import GameComponents.GameSession;
 import GameComponents.Moves.*;
 import GameComponents.Score;
+import Infrastructure.AppManager;
+import Infrastructure.GameManager;
 import Infrastructure.Subscriber;
 
 import javax.swing.*;
@@ -11,7 +12,7 @@ import java.awt.event.KeyListener;
 import java.util.*;
 import java.util.List;
 
-public class Board extends JPanel implements Subscriber {
+public class Board extends JPanel {
     private MoveStrategy strategy;
     boolean win = false;
     boolean continueAfterWin = false;
@@ -24,11 +25,12 @@ public class Board extends JPanel implements Subscriber {
     List<Subscriber> subscribers;
     int rows = 4;
     int cols = 4;
+    AppManager manager;
 
-    public Board() {
+    public Board(List<List<Integer>> values, AppManager manager) {
         System.out.println("BOARD constructor was reached");
 //        this.totalScore = new Score(this);
-        this.subscribers = new ArrayList<>();
+        this.manager = manager;
         setLayout(new BorderLayout());
 
         centerPanel = new JPanel();
@@ -41,21 +43,20 @@ public class Board extends JPanel implements Subscriber {
         centerPanel.setVisible(true);
         topPanel.setVisible(true);
         JLabel scoreLabel = new JLabel("Score: ");
-        this.scoreDisplay = new JTextArea("");
+        this.scoreDisplay = new JTextArea(String.valueOf(0));
         topPanel.add(scoreLabel);
         topPanel.add(scoreDisplay);
         scoreDisplay.setEditable(false);
         add(topPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
-
-        tiles = new ArrayList<>();
+        this.tiles = new ArrayList<>();
         for (int i = 0; i < (rows * cols); i++) {
             Tile emptyTile = new Tile(0, true, Color.lightGray, i / cols, i % cols);
             tiles.add(emptyTile);
             centerPanel.add(emptyTile);
             System.out.println("tile added");
         }
-
+        updateTileBoard(values);
 
         addKeyListener(new KeyListener() {
             @Override
@@ -84,19 +85,11 @@ public class Board extends JPanel implements Subscriber {
 
     protected void assessKeyAction(char c) {
         System.out.println("assessKeyAction in Board was reached");
-        notifySubscribers(EventType.KEY_ACTION, c);
+        manager.sendToMediator(Subscriber.EventType.REQUEST_KEY_ACTION, c);
     }
-    @Override
-    public void update(EventType e, Object o) {
-        System.out.println("---- in Board, update was reached. eventtype: " + e + " object: " + o.getClass());
-        if (e == EventType.UPDATE_TILES) {
-            if (o instanceof List list && list.getFirst() instanceof List sublist && sublist.getFirst() instanceof Integer) {
-                System.out.println("in BOARD update, o is integer list");
-                updateTileBoard(list);
-            }
-        }
-    }
+
     public void updateTileBoard(List<List<Integer>> values){
+
         System.out.println("       UPDATE TILEBOARD IN BOARD WAS REACHED");
         List<Integer> allValues = new ArrayList<>();
         for (List<Integer> l : values){
@@ -108,41 +101,18 @@ public class Board extends JPanel implements Subscriber {
         repaint();
         revalidate();
     }
-    public void updateScoreDisplay(EventType e, Object o){
-        if(e == EventType.DISPLAY_SCORE && o instanceof Integer i){
-            System.out.println("D I S P L A Y S C O R E IS REACHED. values is: " + i);
-            setScore(i);
-            scoreDisplay.setText(String.valueOf(i));
-        }
+    public void updateScoreDisplay(int value){
+        setScore(value);
+        System.out.println("D I S P L A Y S C O R E IS REACHED. points is: " + points);
+        scoreDisplay.setText(String.valueOf(points));
     }
 
-
-    public void subscribe(Subscriber s){
-        if(subscribers== null)
-        {
-            this.subscribers = new ArrayList<>();
-        }
-        subscribers.add(s);
-    }
-    public void unSubscribe(Subscriber s){
-        subscribers.remove(s);
+    protected void updateContinueGame(){
+        continueAfterWin = true;
     }
 
-    private void notifySubscribers(EventType e, Object o){
-        System.out.println("in notifySubscribers in Board, eventtype is: " + e);
-        for (Subscriber s : subscribers) {
-            s.update(e, o);
-        }
-    }
-
-    protected void updateContinueGame(EventType e){
-        if (e == EventType.CONTINUE_GAME){
-            continueAfterWin = true;
-        }
-    }
-
-    public void setScore(int points){
+    public void setScore(int value){
         System.out.println("in setScore, score is: " + points);
-        this.points = points;
+        this.points = points + value;
     }
 }

@@ -3,7 +3,7 @@ package GUI;
 import GUI.Game.Board;
 import GameComponents.GameSession;
 import Infrastructure.AppManager;
-import Infrastructure.GameManager;
+import Server.Database.HighscorePrintout;
 import Server.Database.Highscores;
 import Infrastructure.Subscriber;
 import Server.Database.User;
@@ -12,15 +12,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 
-import static Infrastructure.Subscriber.EventType.DISPLAY_SCORE;
-
-public class MainPanel extends JFrame implements Subscriber {
+public class MainPanel extends JFrame{
     private static int rows = 4;
     private static int cols = 4;
     private static JPanel centerPanel;
+    private static JPanel highscorePanel;
     private Board board;
     private JPanel topPanel;
     private JPanel bottomPanel;
@@ -30,8 +28,11 @@ public class MainPanel extends JFrame implements Subscriber {
     private GameSession game;
     List<Subscriber> subscribers;
     private AppManager manager;
+    Highscores.ScoreValue scoreValue = Highscores.ScoreValue.DATE;
+    JButton backToMenu;
 
     public MainPanel (User user, AppManager manager) {
+        System.out.println("mainPanel constructor is reached");
         this.manager = manager;
         this.user = user;
         this.rows = rows;
@@ -61,13 +62,17 @@ public class MainPanel extends JFrame implements Subscriber {
         revalidate();
         pack();
     }
-    public void showMainMenu(){
+    public void showMainMenu() {
+        System.out.println("showMainMenu in MainPanel is reached");
+        if (centerPanel != null) {
+            centerPanel.removeAll();
+        }
+
         JButton startGame = new JButton("Start new game");
         startGame.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 manager.startGame(user);
-                update(EventType.REQUEST_NEW_GAME, board);
             }
         });
 
@@ -75,7 +80,9 @@ public class MainPanel extends JFrame implements Subscriber {
         seeHighscores.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                showHighscorePanel();
+                System.out.println("showHighscorePanel is called from main Panel");
+
+                manager.update(Subscriber.EventType.REQUEST_ALL_HIGHSCORES, scoreValue);
             }
         });
 
@@ -90,49 +97,62 @@ public class MainPanel extends JFrame implements Subscriber {
         menuButtons.add(startGame);
         menuButtons.add(savedGame);
         menuButtons.add(seeHighscores);
-
         centerPanel.add(menuButtons, BorderLayout.CENTER);
-        JButton quitButton = new JButton("Quit game");
+        add(centerPanel);
+        revalidate();
+        repaint();
+        pack();
+    }
 
-        quitButton.addActionListener(new ActionListener() {
+    public void showEndPanel(int points){
+        centerPanel.removeAll();
+        System.out.println("updateCenterPanel was reached");
+        EndPanel endPanel = new EndPanel(manager, points);
+        centerPanel.add(endPanel, BorderLayout.CENTER);
+        addReturnButton();
+    }
+
+    private void addReturnButton(){
+        if (backToMenu == null) {
+            this.backToMenu = new JButton("Return to menu");
+        }
+        backToMenu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showOptionDialog(null, "Quit game", "Are you sure you want to exit the game?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new Object[]{"Yes", "No"}, "No");
+                System.out.println("from endPanel, return_add_menu_panel is called");
+                manager.update(Subscriber.EventType.REQUEST_ADD_MENU_PANEL, null);
             }
         });
+
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setVisible(true);
         bottomPanel.setBackground(backgroundColor);
-        bottomPanel.add(quitButton, BorderLayout.EAST);
+        bottomPanel.add(backToMenu, BorderLayout.EAST);
         add(bottomPanel, BorderLayout.SOUTH);
         repaint();
         revalidate();
         pack();
     }
 
-
-    private void showEndPanel(){
+    public void showHighscorePanel (HighscorePrintout highscorePrintout){
         centerPanel.removeAll();
-        System.out.println("updateCenterPanel was reached");
-        EndPanel endPanel = new EndPanel();
-        centerPanel.add(endPanel, BorderLayout.CENTER);
-    }
-    public void backToMainMenu(){
-        centerPanel.removeAll();
-        showMainMenu();
-    }
-    private void showHighscorePanel(){
-        centerPanel.removeAll();
-        List<String> scores =  Highscores.getScorePrintout();
-        HighscorePanel highscorePanel = new HighscorePanel(scores);
-        centerPanel.add(highscorePanel, BorderLayout.CENTER);
+        this.highscorePanel = new HighscorePanel(highscorePrintout);
+        if (highscorePrintout != null) {
+            addReturnButton();
+            centerPanel.add(highscorePanel, BorderLayout.CENTER);
+            highscorePanel.setFocusable(true);
+            highscorePanel.setVisible(true);
+            highscorePanel.setEnabled(true);
+            repaint();
+            revalidate();
+            pack();
+        }
     }
 
-    private void showGameBoard(Object object){
-        if (object instanceof Board board) {
+    public void showGameBoard(List<List<Integer>> values){
             System.out.println("in mainPanel, showGameBoard is reached");
             centerPanel.removeAll();
-            this.board = board;
+            this.board = new Board(values, manager);
             System.out.println("in MainPanel, board is not null");
             centerPanel.add(board, BorderLayout.CENTER);
             board.setEnabled(true);
@@ -141,33 +161,15 @@ public class MainPanel extends JFrame implements Subscriber {
             revalidate();
             pack();
             SwingUtilities.invokeLater(board::requestFocusInWindow);
-        }
     }
-    @Override
-    public void update(EventType e, Object data) {
-        System.out.println("update in MainPanel is reached. eventtype is: " + e);
-        if (e == EventType.ADD_GAME_PANEL || e == EventType.REQUEST_NEW_GAME){
-            Board gameBoard = (Board) data;
-            showGameBoard(gameBoard);
-        }
-        else if (e == EventType.ADD_END_PANEL){
-            showEndPanel();
-        }
-        else if (e == EventType.ADD_MENU_PANEL){
-            backToMainMenu();
-        }
-        else if (e == EventType.UPDATE_TILES){
-            List<List<Integer>> values = (List<List<Integer>>) data;
-
-            board.updateTileBoard(values);
-        }
-        }
-    private void updateBoard(){
-
+    public void updateGameBoard(List<List<Integer>> values){
+        board.updateTileBoard(values);
+    }
+    public void updatePoints(int points){
+        System.out.println("updatePoints in MainPanel was reached");
+        board.updateScoreDisplay(points);
     }
 }
-
-
 
 //
 //
