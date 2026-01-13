@@ -3,6 +3,13 @@ package Infrastructure;
 public interface Subscriber {
 
     public enum EventType {
+        REQUEST_VALIDATE_USER,
+        RETURN_EXISTING_USER,
+        RETURN_NO_SUCH_USER,
+        REQUEST_SAVE_NEW_USER,
+        RETURN_USERNAME_TAKEN,
+        RETURN_WRONG_PASSWORD,
+        RETURN_NEW_USER_SAVED,
         REQUEST_NEW_SCORE,
         RETURN_ADD_MENU_PANEL,
         RETURN_ADD_GAME_PANEL,
@@ -15,10 +22,18 @@ public interface Subscriber {
         RETURN_DISPLAY_SCORE,
         RETURN_ADD_END_PANEL,
         REQUEST_CONTINUE_GAME,
+        RETURN_CONTINUE_GAME_TRUE,
+        RETURN_CONTINUE_GAME_FALSE,
         NEW_UNCHECKED_VALUES,
         REQUEST_ALL_HIGHSCORES,
         RETURN_ALL_HIGHSCORES,
-        REQUEST_ADD_MENU_PANEL;
+        REQUEST_ADD_MENU_PANEL,
+        REQUEST_STARTING_TILES,
+        REQUEST_SAVE_GAME,
+        REQUEST_QUIT_GAME,
+        REQUEST_GET_SAVED_GAME,
+        RETURN_GET_SAVED_GAME,
+        RETURN_SAVED_GAME;
     }
     public void update(EventType e, Object data);
 }

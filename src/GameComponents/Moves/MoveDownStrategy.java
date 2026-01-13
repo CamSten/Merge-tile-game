@@ -17,4 +17,5 @@ public class MoveDownStrategy implements MoveStrategy {
         this.move = new Move(game, allTileValues);
         move.assessMovement(reversed, horizontal);
     }
+
 }

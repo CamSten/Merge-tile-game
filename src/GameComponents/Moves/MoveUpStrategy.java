@@ -20,4 +20,5 @@ public class MoveUpStrategy implements MoveStrategy{
         move.assessMovement(reversed, horizontal);
     }
 
+
 }

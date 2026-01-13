@@ -1,11 +1,11 @@
 package GameComponents;
 
-import Infrastructure.GameMediator;
+import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
 import Server.Database.User;
 
 public class Score implements Subscriber {
-    private GameMediator mediator = GameMediator.getInstance();
+    private Mediator mediator = Mediator.getInstance();
     private int totalScore = 0;
     private GameSession game;
     User user;
@@ -19,12 +19,12 @@ public class Score implements Subscriber {
 
     @Override
     public void update(EventType e, Object o) {
-        System.out.println(" UPDATE IN SCORE IS REACHED");
-        if(e == EventType.REQUEST_NEW_SCORE && o != null){
-            calculateScore(o);
-            mediator.update(EventType.RETURN_DISPLAY_SCORE, totalScore);
-            System.out.println("In Score, score is: " + totalScore);
-        }
+//        System.out.println(" UPDATE IN SCORE IS REACHED");
+//        if(e == EventType.REQUEST_NEW_SCORE && o != null){
+//            calculateScore(o);
+//            mediator.update(EventType.RETURN_DISPLAY_SCORE, totalScore);
+//            System.out.println("In Score, score is: " + totalScore);
+//        }
     }
     private void calculateScore(Object o){
         if (o instanceof Integer i) {

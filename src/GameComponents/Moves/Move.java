@@ -1,16 +1,18 @@
 package GameComponents.Moves;
 import GameComponents.GameSession;
-import Infrastructure.GameMediator;
+import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Move {
-    private GameMediator mediator = GameMediator.getInstance();
+    private Mediator mediator = Mediator.getInstance();
     private GameSession game;
     private List<List<Integer>> allBoardSubsets;
     private List<Integer> adjustedValues;
+    private boolean reversed;
+    private boolean horizontal;
     int rows;
     int cols;
     private int points;
@@ -23,6 +25,9 @@ public class Move {
     }
 
     public void assessMovement(boolean reversed, boolean horizontal) {
+        this.points = 0;
+        this.reversed = reversed;
+        this.horizontal = horizontal;
         List<List<Integer>> allSubsetValues = getAllBoardSubsets(horizontal);
         List<List<Integer>> allAdjustedValues = new ArrayList<>();
         for (List<Integer> l : allSubsetValues) {
@@ -38,13 +43,10 @@ public class Move {
             allAdjustedValues.add(mergedValues);
         }
         boolean changedValues = hasValuesChanged(allSubsetValues, allAdjustedValues);
-        boolean completed = isCompleted();
-        boolean hasReached2048 = checkFor2048(horizontal);
-        boolean continueAfter2048 = false;
         if(!horizontal){
             allAdjustedValues = getCorrectOrder(allAdjustedValues);
         }
-        MoveResult moveResult = new MoveResult(allAdjustedValues, changedValues, completed, hasReached2048, continueAfter2048, points);
+        MoveResult moveResult = new MoveResult(allAdjustedValues, changedValues, points);
         mediator.update(Subscriber.EventType.NEW_UNCHECKED_VALUES, moveResult);
     }
     private List<Integer> getAdjustedValues(List<Integer> subset) {
@@ -76,6 +78,32 @@ public class Move {
         this.adjustedValues = adjustedValues;
         return adjustedValues;
     }
+    public boolean hasMergeableMoves() {
+        System.out.println("hasMergeableMoves in Move was reached");
+        List<List<Integer>> rows = getAllBoardSubsets(true);
+        if (hasMergeableNeighbours(rows)) {
+            System.out.println("mergeable");
+            return true;
+        }
+        List<List<Integer>> cols = getAllBoardSubsets(false);
+        if (hasMergeableNeighbours(cols)) {
+            System.out.println("mergeable");
+            return true;
+        }
+        System.out.println("unmergeable");
+        return false;
+    }
+
+    private boolean hasMergeableNeighbours(List<List<Integer>> subsets) {
+        for (List<Integer> line : subsets) {
+            for (int i = 0; i < line.size() - 1; i++) {
+                if (line.get(i).equals(line.get(i + 1))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
     private List<List<Integer>> getCorrectOrder(List<List<Integer>> adjustedValues){
         List<List<Integer>> valuesInOrder = new ArrayList<>();
         for(int i = 0; i < rows; i++){
@@ -89,14 +117,16 @@ public class Move {
     }
 
     private List<List<Integer>> getAllBoardSubsets(boolean horizontal) {
-        int count = rows;
+        int count;
         if (horizontal) {
+            count = rows;
+        } else {
             count = cols;
         }
+
         List<List<Integer>> tileSubsets = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            List<Integer> subset = getSubset(i, horizontal);
-            tileSubsets.add(subset);
+            tileSubsets.add(getSubset(i, horizontal));
         }
         return tileSubsets;
     }
@@ -112,19 +142,6 @@ public class Move {
             }
         }
         return false;
-    }
-
-    private boolean checkFor2048(boolean horizontal) {
-        boolean hasReached2048 = false;
-        List<List<Integer>> allTileValues = getAllBoardSubsets(horizontal);
-        for (List<Integer> l : allTileValues) {
-            for (Integer i : l) {
-                if (i == 2048) {
-                    hasReached2048 = true;
-                }
-            }
-        }
-        return hasReached2048;
     }
 
     public List<Integer> getSubset(int index, boolean horizontal) {
@@ -169,6 +186,8 @@ public class Move {
         return numberOfValueTiles == rows * cols;
     }
     private void setPoints(int value){
-        this.points += value;
+        System.out.println("in setPoints, value is:" + value );
+        points += value;
+        System.out.println("and points is thus: " + points);
     }
 }

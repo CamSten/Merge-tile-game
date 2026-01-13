@@ -1,8 +1,6 @@
 package GameComponents;
-import GUI.Game.Board;
-import GUI.Game.Tile;
 import GameComponents.Moves.*;
-import Infrastructure.GameMediator;
+import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
 import Server.Database.User;
 
@@ -12,28 +10,29 @@ import java.util.List;
 import java.util.Random;
 
 public class GameSession implements Subscriber {
-    GameMediator mediator = GameMediator.getInstance();
+    Mediator mediator = Mediator.getInstance();
     boolean tileAdded = false;
     private User user;
-    private Board board;
     private MoveStrategy strategy;
     boolean win = false;
     boolean continueAfterWin = false;
-    int totalPoints = 0;
-    private int points;
-    List<Tile> tiles = new ArrayList<>();
-    List<List<Integer>> allTileValues = new ArrayList<>();
+    int totalPoints;
+    private List<Integer> allTileValues = new ArrayList<>();
+    private List<List<Integer>> allTileValueSubsets= new ArrayList<>();
+    private List<List<Integer>> allAdjustedValues = new ArrayList<>();
     int rows = 4;
     int cols = 4;
     MoveStrategy moveStrategy = null;
+    private boolean hasReached2048;
+    private boolean victory = false;
 
     public GameSession(User user){
-        mediator.subscribe(this);
         this.user = user;
     }
-    private void start(){
-    getStartingTiles();
-        mediator.update(EventType.RETURN_ADD_GAME_PANEL, allTileValues);
+    public void start(){
+        System.out.println("start in GameSession is reached");
+        totalPoints = 0;
+        getStartingTiles();
     }
 
     public void assessKeyAction(char c){
@@ -41,26 +40,28 @@ public class GameSession implements Subscriber {
         tileAdded = false;
         this.moveStrategy = getMoveStrategy(c);
         if (moveStrategy != null) {
-            moveStrategy.move(allTileValues);
+            moveStrategy.move(allTileValueSubsets);
         }
     }
 
     public void checkUpdatedTileValues(MoveResult result) {
-        setTotalPoints(result.getPoints());
         System.out.println("In GameSession, checkUpdatedTileValues is reached");
-        List<List<Integer>> allAdjustedValues = result.getNewValues();
+        this.allAdjustedValues = result.getNewValues();
+        this.allTileValueSubsets = allAdjustedValues;
+        setTotalPoints(result.getPoints());
+        mediator.update(EventType.RETURN_DISPLAY_SCORE, totalPoints);
         if (result.hasValuesChanged()) {
-            if ((result.hasReached2048() && !result.doContinueAfterWin()) || result.isFull()) {
-                gameOverActions(result.hasReached2048());
+            if (completed(allAdjustedValues)) {
+                gameOverActions();
             } else {
                 System.out.println("IN GAME SESSION, addTile is called");
                 addTile(allAdjustedValues);
-                if (checkIfFull()){
+                if (completed(allAdjustedValues)){
                     System.out.println("in GAMESESSION, full is true");
-                    gameOverActions(result.hasReached2048());
+                    gameOverActions();
                 }
                 else {
-                    updateTiles(allAdjustedValues);
+                    updateTiles();
                 }
             }
         }
@@ -68,10 +69,25 @@ public class GameSession implements Subscriber {
             System.out.println("in Board checkUpdatedTileValues, values haven't changed");
         }
     }
-    public void updateTiles(List<List<Integer>> allAdjustedValues) {
-        allTileValues = allAdjustedValues;
-        mediator.update(EventType.RETURN_NEW_SCORE, allAdjustedValues);
-        mediator.update(EventType.RETURN_UPDATE_TILES, allAdjustedValues);
+    public void updateTiles() {
+        this.allTileValues = new ArrayList<>();
+        for (List<Integer> list : allAdjustedValues) {
+            allTileValues.addAll(list);
+        }
+        EventType eventType = EventType.RETURN_UPDATE_TILES;
+        if (check2048()) {
+            if (!victory) {
+                eventType = EventType.REQUEST_CONTINUE_GAME;
+                victory = true;
+            }
+        }
+//        mediator.update(EventType.RETURN_NEW_SCORE, allAdjustedValues);
+        System.out.println("in GameSession Updatetiles, values are:");
+        mediator.update(eventType, allTileValues);
+    }
+    public void restoreFromGame(Game game){
+        this.allTileValues = game.getAllValues();
+        this.totalPoints = game.getPoints();
     }
 
     @Override
@@ -79,6 +95,11 @@ public class GameSession implements Subscriber {
         System.out.println("update in GameSession is reached. Eventtype is: " + e);
         if (e != null) {
             switch (e) {
+//                case RETURN_NEW_SCORE:{
+//                    int p = (Integer) o;
+//                    System.out.println("return_Display_score in GameSession is reached. score is: " + p);
+//                    setTotalPoints(p);
+//                }
 
                 case REQUEST_NEW_GAME: {
                     start();
@@ -90,17 +111,34 @@ public class GameSession implements Subscriber {
                     }
                     break;
                 }
-//                case RETURN_UPDATE_VALUES: {
-//                    if (o instanceof MoveResult result) {
-//                        checkUpdatedTileValues(result);
-//                    }
-//                }
+                case RETURN_UPDATE_VALUES: {
+                    if (o instanceof MoveResult result) {
+                        checkUpdatedTileValues(result);
+                    }
+                }
                 case NEW_UNCHECKED_VALUES: {
                     if (o instanceof MoveResult result) {
                         checkUpdatedTileValues(result);
                     }
                     break;
                 }
+                case RETURN_CONTINUE_GAME_TRUE: {
+                    this.continueAfterWin = true;
+                    break;
+                }
+                case RETURN_CONTINUE_GAME_FALSE: {
+                    saveScore();
+                    break;
+                }
+                case REQUEST_SAVE_GAME:{
+                    System.out.println("in RequestSaveGame, totalPoints is: " + totalPoints);
+                    Game newgame = new Game(user, allTileValues, totalPoints);
+                    mediator.update(EventType.RETURN_SAVED_GAME, newgame);
+                }
+
+//                case REQUEST_GET_SAVED_GAME: {
+//                    if (o instanceof List)
+//                }
             }
         }
     }
@@ -134,45 +172,50 @@ public class GameSession implements Subscriber {
                 int newValue = getStartingValue();
                 allAdjustedValues.get(row).set(col, newValue);
                 System.out.println("in addTile, newvalue is: " + newValue);
+                }
                 tileAdded = true;
             }
-        }
     }
 
     private void setTotalPoints(int value){
-        this.totalPoints = totalPoints + value;
+        totalPoints = totalPoints + value;
+        System.out.println("totalPoints in GameSession is: " + totalPoints);
     }
     private void getStartingTiles() {
         System.out.println("in GameSession, getStartingTiles was reached");
-        setCoordinates();
-        List<List<Integer>> allTileValues = new ArrayList<>();
+        this.allTileValueSubsets = new ArrayList<>();
         for (int i = 0; i < rows; i++){
             List<Integer> subset = new ArrayList<>();
             for (int j = 0; j < cols; j++){
                 subset.add(0);
             }
-            allTileValues.add(subset);
+            allTileValueSubsets.add(subset);
         }
-        this.allTileValues = allTileValues;
+
         int startValueOne = getStartingValue();
         int startValueTwo = getStartingValue();
-        List<Integer> valueSubsetOne = allTileValues.getFirst();
+        List<Integer> valueSubsetOne = allTileValueSubsets.getFirst();
         valueSubsetOne.removeFirst();
         valueSubsetOne.add(startValueOne);
         Collections.shuffle(valueSubsetOne);
-        List<Integer>valueSubsetTwo = allTileValues.getLast();
+        List<Integer>valueSubsetTwo = allTileValueSubsets.getLast();
         valueSubsetTwo.removeFirst();
         valueSubsetTwo.add(startValueTwo);
         Collections.shuffle(valueSubsetTwo);
+        this.allTileValues = new ArrayList<>();
+        for (List<Integer> list : allTileValueSubsets){
+            allTileValues.addAll(list);
+        }
+        mediator.update(EventType.RETURN_ADD_GAME_PANEL, allTileValues);
     }
 
-    private void setCoordinates() {
-        for (Tile t : tiles) {
-            int index = tiles.indexOf(t);
-            t.setRow(index / rows);
-            t.setCol(index % cols);
-        }
-    }
+//    private void setCoordinates() {
+//        for (Tile t : tiles) {
+//            int index = tiles.indexOf(t);
+//            t.setRow(index / rows);
+//            t.setCol(index % cols);
+//        }
+//    }
 
     private int getStartingValue() {
         Random random = new Random();
@@ -186,11 +229,22 @@ public class GameSession implements Subscriber {
             return values.getLast();
         }
     }
-    private void gameOverActions(boolean hasReached2048) {
+    private boolean check2048(){
+        for (List<Integer> l : allAdjustedValues) {
+            for (Integer i : l) {
+                if (i == 2048) {
+                    this.hasReached2048 = true;
+                }
+            }
+        }
+        return hasReached2048;
+    }
+    private void gameOverActions() {
         System.out.println("gameOverActions in GameSession is reached");
         System.out.println("in Board, score is: " + totalPoints);
+        EventType eventType = null;
         saveScore();
-        if (hasReached2048){
+        if (check2048()){
             win = true;
         }
         if (continueAfterWin) {
@@ -198,38 +252,47 @@ public class GameSession implements Subscriber {
         }
         mediator.update(EventType.RETURN_ADD_END_PANEL, totalPoints);
     }
-
-    protected void updateContinueGame(Subscriber.EventType e){
-        if (e == EventType.REQUEST_CONTINUE_GAME){
-            continueAfterWin = true;
-        }
+    private boolean hasPossibleMoves(List<List<Integer>>allAdjustedValues) {
+        System.out.println("hasPossibleMoves in gameSession is reached");
+        Move move = new Move(this, allAdjustedValues);
+        return move.hasMergeableMoves();
     }
+
     private void setMoveStrategy(MoveStrategy strategy){
         this.strategy = strategy;
     }
-    public List<Tile> getTiles(){
-        return tiles;
-    }
+//    public List<Tile> getTiles(){
+//        return tiles;
+//    }
     public int getRows(){
         return rows;
     }
     public int getCols(){
         return cols;
     }
-    public void setScore(int points){
-        System.out.println("in setScore, score is: " + points);
-        this.points = points;
+    public List<List<Integer>> getAllTileValueSubsets(){
+        return allTileValueSubsets;
     }
-    private boolean checkIfFull(){
+
+    private boolean completed(List<List<Integer>> allAdjustedTileValues){
+        System.out.println("CHECK IF COMPLETE IN GAME SESSION IS REACHED");
         int emptyTile = 0;
-        for(List<Integer> l : allTileValues){
+        for(List<Integer> l : allAdjustedTileValues){
             for(int i : l) {
                 if (i == 0) {
                     emptyTile += 1;
                 }
             }
         }
-        return emptyTile <= 0;
+        if (emptyTile <= 0) {
+            if (hasPossibleMoves(allAdjustedTileValues)) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+        return false;
     }
     protected void saveScore(){
         Score score = new Score(this);
@@ -238,6 +301,9 @@ public class GameSession implements Subscriber {
     }
     public User getUser(){
         return user;
+    }
+    public void subscribe(){
+        mediator.subscribe(this);
     }
     int getTotalPoints(){
         return totalPoints;

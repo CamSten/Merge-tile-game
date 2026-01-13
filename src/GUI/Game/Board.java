@@ -1,8 +1,10 @@
 package GUI.Game;
+import GUI.MainFrame;
 import GameComponents.Moves.*;
 import GameComponents.Score;
 import Infrastructure.AppManager;
 import Infrastructure.GameManager;
+import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
 
 import javax.swing.*;
@@ -13,6 +15,7 @@ import java.util.*;
 import java.util.List;
 
 public class Board extends JPanel {
+    private MainFrame mainFrame;
     private MoveStrategy strategy;
     boolean win = false;
     boolean continueAfterWin = false;
@@ -25,26 +28,37 @@ public class Board extends JPanel {
     List<Subscriber> subscribers;
     int rows = 4;
     int cols = 4;
-    AppManager manager;
+    private Mediator mediator;
+    private Color backgroundColor = Color.darkGray;
+    private List<Integer>allValues;
 
-    public Board(List<List<Integer>> values, AppManager manager) {
+    public Board(List<Integer> values, Mediator mediator, MainFrame mainFrame) {
         System.out.println("BOARD constructor was reached");
 //        this.totalScore = new Score(this);
-        this.manager = manager;
+        this.mediator = mediator;
+        this.mainFrame = mainFrame;
         setLayout(new BorderLayout());
-
+        setBackground(backgroundColor);
         centerPanel = new JPanel();
         topPanel = new JPanel(new FlowLayout());
 
         centerPanel.setLayout(new GridLayout(rows, cols));
+        centerPanel.setBackground(backgroundColor);
 //        centerPanel.setFocusable(true);
 //        centerPanel.setEnabled(true);
 
         centerPanel.setVisible(true);
         topPanel.setVisible(true);
         JLabel scoreLabel = new JLabel("Score: ");
+        scoreLabel.setBackground(backgroundColor);
+        scoreLabel.setForeground(GUI.Game.GameColors.headerText());
+        scoreLabel.setFont(GUI.Game.GameFont.headerFont());
         this.scoreDisplay = new JTextArea(String.valueOf(0));
+        scoreDisplay.setBackground(backgroundColor);
+        scoreDisplay.setForeground(GUI.Game.GameColors.headerText());
+        scoreDisplay.setFont(GUI.Game.GameFont.headerFont());
         topPanel.add(scoreLabel);
+        topPanel.setBackground(backgroundColor);
         topPanel.add(scoreDisplay);
         scoreDisplay.setEditable(false);
         add(topPanel, BorderLayout.NORTH);
@@ -85,16 +99,12 @@ public class Board extends JPanel {
 
     protected void assessKeyAction(char c) {
         System.out.println("assessKeyAction in Board was reached");
-        manager.sendToMediator(Subscriber.EventType.REQUEST_KEY_ACTION, c);
+        mainFrame.update(Subscriber.EventType.REQUEST_KEY_ACTION, c);
     }
 
-    public void updateTileBoard(List<List<Integer>> values){
-
+    public void updateTileBoard(List<Integer> allValues){
         System.out.println("       UPDATE TILEBOARD IN BOARD WAS REACHED");
-        List<Integer> allValues = new ArrayList<>();
-        for (List<Integer> l : values){
-            allValues.addAll(l);
-        }
+        System.out.println("values.size is: " + allValues.size());
         for (int i = 0; i < allValues.size(); i++) {
             Tile.adjustTile(tiles.get(i), allValues.get(i));
         }
@@ -103,16 +113,18 @@ public class Board extends JPanel {
     }
     public void updateScoreDisplay(int value){
         setScore(value);
-        System.out.println("D I S P L A Y S C O R E IS REACHED. points is: " + points);
-        scoreDisplay.setText(String.valueOf(points));
+        System.out.println("D I S P L A Y S C O R E IS REACHED. points is: " + value);
+        scoreDisplay.setText(String.valueOf(value));
     }
 
     protected void updateContinueGame(){
         continueAfterWin = true;
     }
-
     public void setScore(int value){
         System.out.println("in setScore, score is: " + points);
         this.points = points + value;
+    }
+    public List<Integer>getAllValues(){
+        return allValues;
     }
 }

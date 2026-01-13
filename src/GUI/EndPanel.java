@@ -1,47 +1,48 @@
 package GUI;
 
 import Infrastructure.AppManager;
-import Infrastructure.GameManager;
-import Infrastructure.GameMediator;
-import Infrastructure.Subscriber;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class EndPanel extends JPanel {
     private AppManager manager;
     private int points;
+    private Color backgroundColor = Color.darkGray;
+
 
     public EndPanel(AppManager manager, int points){
-        System.out.println("EndPanel constructor was reached");
+        System.out.println("EndPanel constructor was reached, points are: " + points);
         this.manager = manager;
         this.points = points;
+        setBackground(backgroundColor);
         setLayout(new BorderLayout());
-        JTextArea endMessage = new JTextArea("Game over");
-        endMessage.setFont(new Font("Arial", Font.BOLD, 30));
-        JButton newGame = new JButton("Start new game");
-        newGame.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                manager.update(Subscriber.EventType.REQUEST_NEW_GAME, null);
-            }
-        });
-        JButton backToMenu = new JButton("Return to main menu");
 
         JLabel pointsHeader = new JLabel("Points:");
+        pointsHeader.setBackground(backgroundColor);
+        pointsHeader.setForeground(GUI.Game.GameColors.headerText());
+        pointsHeader.setFont(GUI.Game.GameFont.headerFont());
         JTextArea displayPoints = new JTextArea(String.valueOf(points));
+        displayPoints.setBackground(backgroundColor);
+        displayPoints.setForeground(GUI.Game.GameColors.headerText());
+        displayPoints.setFont(GUI.Game.GameFont.headerFont());
+
         JPanel pointsPanel = new JPanel(new GridLayout(1, 2));
         pointsPanel.add(pointsHeader);
         pointsPanel.add(displayPoints);
-        JPanel buttonPanel = new JPanel(new BorderLayout());
-        add(pointsPanel, BorderLayout.NORTH);
-        buttonPanel.add(backToMenu, BorderLayout.EAST);
-        buttonPanel.add(newGame, BorderLayout.WEST);
-        add(buttonPanel, BorderLayout.SOUTH);
+        pointsPanel.setBackground(backgroundColor);
+        pointsPanel.setBorder(
+                BorderFactory.createLineBorder(GUI.Game.GameColors.headerText(), 4, true));
+        add(pointsPanel, BorderLayout.CENTER);
         setVisible(true);
-        add(endMessage, BorderLayout.CENTER);
+        add(endMessage(), BorderLayout.NORTH);
     }
 
+    public JTextArea endMessage (){
+        JTextArea endMessage = new JTextArea("Game over");
+        endMessage.setFont(new Font("Arial", Font.BOLD, 30));
+        endMessage.setForeground(GUI.Game.GameColors.headerText());
+        endMessage.setOpaque(false);
+        return endMessage;
+    }
 }

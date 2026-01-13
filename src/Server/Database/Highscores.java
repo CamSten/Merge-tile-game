@@ -1,7 +1,7 @@
 package Server.Database;
 
 import GameComponents.Score;
-import Infrastructure.GameMediator;
+import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
 
 import java.io.BufferedReader;
@@ -18,7 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Highscores implements Subscriber {
-    GameMediator mediator = GameMediator.getInstance();
+    private Mediator mediator = Mediator.getInstance();
+    private static Highscores highscores = new Highscores();
     static List<String> scoreList = new ArrayList<>();
     private int score;
     private static final int maxSavedScores = 25;
@@ -26,9 +27,14 @@ public class Highscores implements Subscriber {
     public ScoreValue scoreValue;
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy HH:mm");
 
-    public Highscores() {
+    private Highscores() {
+
+    }
+    public static Highscores getInstance(){
+        return highscores;
+    }
+    public void subscribe(){
         mediator.subscribe(this);
-        System.out.println("Highscores constructor is reached");
     }
     @Override
     public void update(EventType e, Object data) {

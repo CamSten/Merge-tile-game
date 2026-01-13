@@ -18,4 +18,5 @@ public class MoveLeftStrategy implements MoveStrategy {
         this.move = new Move(game, allTileValues);
         move.assessMovement(reversed, horizontal);
     }
+
 }
