@@ -284,7 +284,7 @@ public class GameSession implements Subscriber {
             win = false;
         }
         Game game = new Game(user, allTileValues, totalPoints);
-        mediator.update(EventType.RETURN_ADD_END_PANEL, game);
+        mediator.update(EventType.REQUEST_ADD_END_PANEL, game);
         mediator.update(EventType.CONFIRM_FINISHED_SESSION, this);
     }
     private boolean hasPossibleMoves(List<List<Integer>>allAdjustedValues) {
@@ -340,7 +340,7 @@ public class GameSession implements Subscriber {
     public void subscribe(){
         mediator.subscribe(this);
     }
-    int getTotalPoints(){
+    public int getTotalPoints(){
         return totalPoints;
     }
 }

@@ -100,10 +100,10 @@ public class MainFrame extends JFrame {
             pack();
        }
 
-        public void showEndPanel(int points) {
+        public void showEndPanel(int points, boolean highestScore) {
             centerPanel.removeAll();
             System.out.println("updateCenterPanel was reached");
-            EndPanel endPanel = new EndPanel(manager, points);
+            EndPanel endPanel = new EndPanel(manager, points, highestScore);
             centerPanel.add(endPanel, BorderLayout.CENTER);
             JButton newGame = new JButton("Start new game");
             newGame.setBackground(backgroundColor);

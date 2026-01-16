@@ -119,6 +119,7 @@ public class GameManager implements Subscriber {
             case CONFIRM_FINISHED_SESSION -> {
                 GameSession endedSession = (GameSession) data;
                 mediator.unsubscribeLowerGame(endedSession);
+                mediator.update(EventType.REQUEST_HIGHEST_SCORE, endedSession.getTotalPoints());
             }
         }
     }
