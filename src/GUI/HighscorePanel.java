@@ -3,7 +3,7 @@ package GUI;
 import GUI.Game.GameColors;
 import GUI.Game.GameFont;
 import Server.Database.HighscorePrintout;
-import Server.Database.Highscores;
+import Server.Database.HighscoreDatabase;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicBorders;
@@ -17,8 +17,8 @@ import java.util.List;
 
 public class HighscorePanel extends JPanel {
     private List<String>scores = new ArrayList<>();
-    private static List<String[]>scorePrintout = new ArrayList<>();
-    private Highscores.ScoreValue scoreValue;
+    private List<String[]>scorePrintout = new ArrayList<>();
+    private HighscoreDatabase.ScoreValue scoreValue;
     HighscorePrintout highscorePrintout;
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy HH:mm");
 
@@ -26,60 +26,80 @@ public class HighscorePanel extends JPanel {
         this.highscorePrintout = highscorePrintout;
         if (highscorePrintout != null) {
             this.scorePrintout = highscorePrintout.getScorePrintout();
+            sortList(HighscoreDatabase.ScoreValue.POINTS);
             this.scoreValue = highscorePrintout.getScoreValue();
             System.out.println("highscorePanel constructor is reached");
             this.scores = scores;
             setLayout(new BorderLayout());
             JPanel scorePanel = new JPanel(new BorderLayout());
-            scorePanel.setBackground(GameColors.defaultBackground());
-//        scorePanel.setOpaque(true);
+            scorePanel.setBackground(Color.DARK_GRAY);
             scorePanel.setVisible(true);
 
             JLabel header = new JLabel("Highscores:");
-            header.setFont(GameFont.headerFont());
-//        header.setPreferredSize(new Dimension(500, 20));
-
+            header.setFont(GameFont.topHeaderFont());
+            header.setForeground(GUI.Game.GameColors.headerText());;
             JPanel centerPanel = new JPanel(new BorderLayout());
             centerPanel.setVisible(true);
 
             JPanel scoreHeader = new JPanel(new GridLayout(1, 3));
-            JTextArea namesArea = new JTextArea(scorePrintout(Highscores.ScoreValue.NAME));
-            JTextArea movesArea = new JTextArea(scorePrintout(Highscores.ScoreValue.POINTS));
-            JTextArea datesArea = new JTextArea(scorePrintout(Highscores.ScoreValue.DATE));
-            namesArea.setBorder(new BasicBorders.FieldBorder(Color.lightGray, Color.DARK_GRAY, Color.pink, Color.MAGENTA));
-            movesArea.setBorder(new BasicBorders.FieldBorder(Color.lightGray, Color.DARK_GRAY, Color.pink, Color.MAGENTA));
-            datesArea.setBorder(new BasicBorders.FieldBorder(Color.lightGray, Color.DARK_GRAY, Color.pink, Color.MAGENTA));
-            JButton showName = new JButton("Namn:");
-            showName.setFont(GameFont.defaultFont());
+            JTextArea namesArea = new JTextArea(scorePrintout(HighscoreDatabase.ScoreValue.NAME));
+            namesArea.setForeground(GUI.Game.GameColors.headerText());
+            namesArea.setFont(GUI.Game.GameFont.headerFont());
+            JTextArea movesArea = new JTextArea(scorePrintout(HighscoreDatabase.ScoreValue.POINTS));
+            movesArea.setForeground(GUI.Game.GameColors.headerText());
+            movesArea.setFont(GUI.Game.GameFont.headerFont());
+            JTextArea datesArea = new JTextArea(scorePrintout(HighscoreDatabase.ScoreValue.DATE));
+            datesArea.setForeground(GUI.Game.GameColors.headerText());
+            datesArea.setFont(GUI.Game.GameFont.headerFont());
+            namesArea.setBorder(
+                    BorderFactory.createLineBorder(GUI.Game.GameColors.headerText(), 1, true));
+            movesArea.setBorder(
+                    BorderFactory.createLineBorder(GUI.Game.GameColors.headerText(), 1, true));
+            datesArea.setBorder(
+                    BorderFactory.createLineBorder(GUI.Game.GameColors.headerText(), 1, true));
+            JButton showName = new JButton("Name:");
+            showName.setBackground(Color.DARK_GRAY);
+            showName.setForeground(GUI.Game.GameColors.headerText());
+            showName.setFont(GUI.Game.GameFont.headerFont());
+            showName.setBorder(
+                    BorderFactory.createLineBorder(GUI.Game.GameColors.headerText(), 2, true));
             showName.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                sortList(Highscores.ScoreValue.NAME);
-                    namesArea.setText(scorePrintout(Highscores.ScoreValue.NAME));
-                    movesArea.setText(scorePrintout(Highscores.ScoreValue.POINTS));
-                    datesArea.setText(scorePrintout(Highscores.ScoreValue.DATE));
+                sortList(HighscoreDatabase.ScoreValue.NAME);
+                    namesArea.setText(scorePrintout(HighscoreDatabase.ScoreValue.NAME));
+                    movesArea.setText(scorePrintout(HighscoreDatabase.ScoreValue.POINTS));
+                    datesArea.setText(scorePrintout(HighscoreDatabase.ScoreValue.DATE));
                 }
             });
-            JButton showMoves = new JButton("Antal drag:");
-            showMoves.setFont(GameFont.defaultFont());
+            JButton showMoves = new JButton("Score:");
+            showMoves.setBackground(Color.DARK_GRAY);
+            showMoves.setForeground(GUI.Game.GameColors.headerText());
+            showMoves.setFont(GUI.Game.GameFont.headerFont());
+            showMoves.setBorder(
+                    BorderFactory.createLineBorder(GUI.Game.GameColors.headerText(), 2, true));
             showMoves.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                sortList(Highscores.ScoreValue.POINTS);
-                    namesArea.setText(scorePrintout(Highscores.ScoreValue.NAME));
-                    movesArea.setText(scorePrintout(Highscores.ScoreValue.POINTS));
-                    datesArea.setText(scorePrintout(Highscores.ScoreValue.DATE));
+                sortList(HighscoreDatabase.ScoreValue.POINTS);
+                    namesArea.setText(scorePrintout(HighscoreDatabase.ScoreValue.NAME));
+                    movesArea.setText(scorePrintout(HighscoreDatabase.ScoreValue.POINTS));
+                    datesArea.setText(scorePrintout(HighscoreDatabase.ScoreValue.DATE));
                 }
             });
-            JButton showDate = new JButton("Datum:");
-            showDate.setFont(GameFont.defaultFont());
+            JButton showDate = new JButton("Date:");
+            showDate.setBackground(Color.DARK_GRAY);
+            showDate.setForeground(GUI.Game.GameColors.headerText());
+            showDate.setFont(GUI.Game.GameFont.headerFont());
+            showDate.setBorder(
+                    BorderFactory.createLineBorder(GUI.Game.GameColors.headerText(), 2, true));
             showDate.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                sortList(Highscores.ScoreValue.DATE);
-                    namesArea.setText(scorePrintout(Highscores.ScoreValue.NAME));
-                    movesArea.setText(scorePrintout(Highscores.ScoreValue.POINTS));
-                    datesArea.setText(scorePrintout(Highscores.ScoreValue.DATE));
+                sortList(HighscoreDatabase.ScoreValue.DATE);
+                    namesArea.setText(scorePrintout(HighscoreDatabase.ScoreValue.NAME));
+                    movesArea.setText(scorePrintout(HighscoreDatabase.ScoreValue.POINTS));
+                    datesArea.setText(scorePrintout(HighscoreDatabase.ScoreValue.DATE));
                 }
             });
 
@@ -89,7 +109,7 @@ public class HighscorePanel extends JPanel {
             centerPanel.add(scoreHeader, BorderLayout.NORTH);
 
             JPanel showScores = new JPanel(new GridLayout(1, 3));
-            showScores.setBackground(GameColors.defaultBackground());
+            showScores.setBackground(Color.DARK_GRAY);
             showScores.setVisible(true);
             showScores.setOpaque(true);
 
@@ -114,11 +134,13 @@ public class HighscorePanel extends JPanel {
             scorePanel.add(centerPanel, BorderLayout.CENTER);
 //        scorePanel.setBackground(GameColors.defaultBackground());
             scorePanel.setVisible(true);
+            scorePanel.setBorder(
+                    BorderFactory.createLineBorder(GUI.Game.GameColors.headerText(), 4, true));
             add(scorePanel, BorderLayout.CENTER);
         }
     }
 
-    private String scorePrintout(Highscores.ScoreValue scoreValue){
+    private String scorePrintout(HighscoreDatabase.ScoreValue scoreValue){
         List<String> highscorePrintoutScoreSubset = highscorePrintout.getScoreSubset(scoreValue);
         String printout = "";
         System.out.println("in HighscorePanel, scoreValue is: " + scoreValue);
@@ -128,7 +150,7 @@ public class HighscorePanel extends JPanel {
         }
         return printout;
     }
-    public static void sortList(Highscores.ScoreValue scoreValue){
+    public void sortList(HighscoreDatabase.ScoreValue scoreValue){
         List<String[]> values = scorePrintout;
         boolean changePlace = false;
         if (!values.isEmpty()) {
@@ -151,7 +173,7 @@ public class HighscorePanel extends JPanel {
                         case DATE: {
                             LocalDateTime score1 = LocalDateTime.parse(values.get(i)[2], formatter);
                             LocalDateTime score2 = LocalDateTime.parse(values.get(i - 1)[2], formatter);
-                            changePlace = score2.isAfter(score1);
+                            changePlace = score1.isAfter(score2);
                             break;
                         }
                     }

@@ -1,9 +1,7 @@
 package GUI;
 
-import GUI.Game.Board;
-import GameComponents.GameSession;
 import Infrastructure.AppManager;
-import Server.Database.Highscores;
+import Server.Database.HighscoreDatabase;
 import Infrastructure.Subscriber;
 import Server.Database.User;
 
@@ -11,7 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 public class MenuPanel extends JPanel{
     private static int rows = 4;
@@ -22,13 +19,13 @@ public class MenuPanel extends JPanel{
     private Color backgroundColor = Color.darkGray;
     private User user;
     private AppManager manager;
-    Highscores.ScoreValue scoreValue = Highscores.ScoreValue.DATE;
+    HighscoreDatabase.ScoreValue scoreValue = HighscoreDatabase.ScoreValue.DATE;
 
     public MenuPanel(User user, AppManager manager, boolean hasSavedGame) {
         if (bottomPanel != null ){
             bottomPanel.removeAll();
         }
-        System.out.println("menuPanel constructor is reached");
+        System.out.println("menuPanel constructor is reached, hasSavedGame is: " + hasSavedGame);
 
         this.manager = manager;
         this.user = user;
@@ -41,10 +38,10 @@ public class MenuPanel extends JPanel{
         centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBackground(backgroundColor);
         add(centerPanel, BorderLayout.CENTER);
-
         showMainMenu(hasSavedGame);
-        bottomPanel = new JPanel();
-        add(bottomPanel, BorderLayout.SOUTH);
+//        bottomPanel = new JPanel();
+//        bottomPanel.setOpaque(true);
+//        add(bottomPanel, BorderLayout.SOUTH);
         repaint();
         revalidate();
     }
@@ -58,7 +55,7 @@ public class MenuPanel extends JPanel{
         topPanel.setBackground(backgroundColor);
         topPanel.setVisible(true);
         add(topPanel, BorderLayout.NORTH);
-        System.out.println("showMainMenu in MenuPanel is reached");
+        System.out.println("showMainMenu in MenuPanel is reached, hasSavedGame is: " + hasSavedGame);
         if (centerPanel != null) {
             centerPanel.removeAll();
         }

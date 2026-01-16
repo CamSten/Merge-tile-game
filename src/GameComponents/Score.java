@@ -5,7 +5,7 @@ import Infrastructure.Subscriber;
 import Server.Database.User;
 
 public class Score implements Subscriber {
-    private Mediator mediator = Mediator.getInstance();
+//    private Mediator mediator;
     private int totalScore = 0;
     private GameSession game;
     User user;

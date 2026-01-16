@@ -5,9 +5,9 @@ import java.util.List;
 
 public class HighscorePrintout {
     private List<String[]> scorePrintout;
-    private Highscores.ScoreValue scoreValue;
+    private HighscoreDatabase.ScoreValue scoreValue;
 
-    public HighscorePrintout(List<String[]> scorePrintout, Highscores.ScoreValue scoreValue) {
+    public HighscorePrintout(List<String[]> scorePrintout, HighscoreDatabase.ScoreValue scoreValue) {
         this.scorePrintout = scorePrintout;
         this.scoreValue = scoreValue;
     }
@@ -16,21 +16,21 @@ public class HighscorePrintout {
         return scorePrintout;
     }
 
-    public Highscores.ScoreValue getScoreValue() {
+    public HighscoreDatabase.ScoreValue getScoreValue() {
         return scoreValue;
     }
-    public List<String>getScoreSubset(Highscores.ScoreValue scoreValue){
+    public List<String>getScoreSubset(HighscoreDatabase.ScoreValue scoreValue){
         List<String> scoreSubset = new ArrayList<>();
         switch (scoreValue){
-            case Highscores.ScoreValue.NAME -> {
+            case HighscoreDatabase.ScoreValue.NAME -> {
                 scoreSubset = getScorePrintoutName();
                 break;
             }
-            case Highscores.ScoreValue.DATE -> {
+            case HighscoreDatabase.ScoreValue.DATE -> {
                 scoreSubset = getScorePrintoutDate();
                 break;
             }
-            case Highscores.ScoreValue.POINTS -> {
+            case HighscoreDatabase.ScoreValue.POINTS -> {
                 scoreSubset = getScorePrintoutPoints();
                 break;
             }

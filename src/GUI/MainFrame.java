@@ -6,13 +6,15 @@ import Infrastructure.AppManager;
 import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
 import Server.Database.HighscorePrintout;
-import Server.Database.Highscores;
+import Server.Database.HighscoreDatabase;
 import Server.Database.User;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.List;
 
 public class MainFrame extends JFrame {
@@ -31,7 +33,7 @@ public class MainFrame extends JFrame {
         java.util.List<Subscriber> subscribers;
         private AppManager manager;
         private Mediator mediator;
-        Highscores.ScoreValue scoreValue = Highscores.ScoreValue.DATE;
+        HighscoreDatabase.ScoreValue scoreValue = HighscoreDatabase.ScoreValue.DATE;
         JButton backToMenu;
 
         public MainFrame(Mediator mediator, AppManager manager) {
@@ -64,6 +66,15 @@ public class MainFrame extends JFrame {
             bottomPanel = new JPanel(new BorderLayout());
             bottomPanel.setBackground(backgroundColor);
             add(bottomPanel, BorderLayout.SOUTH);
+            setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    manager.assessQuit(0);
+                    dispose();
+                    System.exit(0);
+                }
+            });
             repaint();
             revalidate();
             pack();
@@ -77,7 +88,10 @@ public class MainFrame extends JFrame {
             pack();
        }
        public void showMenuPanel(User user, boolean hasSavedGame){
-            System.out.println("showMenuPanel in MainFrame is reached");
+            System.out.println("showMenuPanel in MainFrame is reached, hasSavedGame is: " + hasSavedGame);
+            if (bottomPanel != null){
+                bottomPanel.removeAll();
+            }
             centerPanel.removeAll();
             this.menuPanel = new MenuPanel(user, manager, hasSavedGame);
             centerPanel.add(menuPanel);
@@ -88,11 +102,9 @@ public class MainFrame extends JFrame {
 
         public void showEndPanel(int points) {
             centerPanel.removeAll();
-
             System.out.println("updateCenterPanel was reached");
             EndPanel endPanel = new EndPanel(manager, points);
             centerPanel.add(endPanel, BorderLayout.CENTER);
-            board.setEnabled(false);
             JButton newGame = new JButton("Start new game");
             newGame.setBackground(backgroundColor);
             newGame.setForeground(GUI.Game.GameColors.headerText());
@@ -102,7 +114,7 @@ public class MainFrame extends JFrame {
             newGame.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    manager.update(Subscriber.EventType.REQUEST_NEW_GAME, null);
+                    manager.update(Subscriber.EventType.REQUEST_NEW_GAME, user);
                 }
             });
 
@@ -153,10 +165,10 @@ public class MainFrame extends JFrame {
             }
         }
         public void showGameBoard(List<Integer> values) {
-            this.board = new Board(values, mediator, this);
             System.out.println("in mainPanel, showGameBoard is reached");
             centerPanel.removeAll();
-            System.out.println("in MainPanel, board is not null");
+            repaint();
+            this.board = new Board(values, mediator, this);
 
             if (bottomPanel != null){
                 bottomPanel.removeAll();
@@ -186,7 +198,6 @@ public class MainFrame extends JFrame {
             revalidate();
             pack();
         }
-
         public void update(Subscriber.EventType eventType, Object data){
             mediator.update(eventType, data);
         }

@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class Move {
-    private Mediator mediator = Mediator.getInstance();
-    private GameSession game;
+    private Mediator mediator;
+    private GameSession gameSession;
     private List<List<Integer>> allBoardSubsets;
     private List<Integer> adjustedValues;
     private boolean reversed;
@@ -17,8 +17,10 @@ public class Move {
     int cols;
     private int points;
 
-    public Move(GameSession game, List<List<Integer>> allBoardSubsets) {
-        this.game = game;
+    public Move(GameSession game, List<List<Integer>> allBoardSubsets, Mediator mediator) {
+        System.out.println("----Move constructor was reached");
+        this.mediator = mediator;
+        this.gameSession = game;
         this.allBoardSubsets = allBoardSubsets;
         this.rows = game.getRows();
         this.cols = game.getCols();
@@ -47,7 +49,7 @@ public class Move {
             allAdjustedValues = getCorrectOrder(allAdjustedValues);
         }
         MoveResult moveResult = new MoveResult(allAdjustedValues, changedValues, points);
-        mediator.update(Subscriber.EventType.NEW_UNCHECKED_VALUES, moveResult);
+        mediator.update(Subscriber.EventType.RETURN_NEW_UNCHECKED_VALUES, moveResult);
     }
     private List<Integer> getAdjustedValues(List<Integer> subset) {
         List<Integer> adjustedValues = new ArrayList<>();
@@ -69,7 +71,7 @@ public class Move {
                     adjustedValues.add(nonZeroValues.get(i));
                 }
             }
-            mediator.update(Subscriber.EventType.RETURN_NEW_SCORE, points);
+            mediator.update(Subscriber.EventType.RETURN_NEW_POINTS, points);
             System.out.println("in Move, points is: " + points);
         }
         while (adjustedValues.size() < subset.size()) {

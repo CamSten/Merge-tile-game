@@ -6,7 +6,6 @@ import Infrastructure.AppManager;
 import Infrastructure.GameManager;
 import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -48,15 +47,17 @@ public class Board extends JPanel {
 //        centerPanel.setEnabled(true);
 
         centerPanel.setVisible(true);
+        centerPanel.setBorder(
+                BorderFactory.createLineBorder(Color.lightGray, 7, false));
         topPanel.setVisible(true);
         JLabel scoreLabel = new JLabel("Score: ");
         scoreLabel.setBackground(backgroundColor);
         scoreLabel.setForeground(GUI.Game.GameColors.headerText());
-        scoreLabel.setFont(GUI.Game.GameFont.headerFont());
+        scoreLabel.setFont(GUI.Game.GameFont.topHeaderFont());
         this.scoreDisplay = new JTextArea(String.valueOf(0));
         scoreDisplay.setBackground(backgroundColor);
         scoreDisplay.setForeground(GUI.Game.GameColors.headerText());
-        scoreDisplay.setFont(GUI.Game.GameFont.headerFont());
+        scoreDisplay.setFont(GUI.Game.GameFont.topHeaderFont());
         topPanel.add(scoreLabel);
         topPanel.setBackground(backgroundColor);
         topPanel.add(scoreDisplay);

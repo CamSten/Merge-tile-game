@@ -1,6 +1,5 @@
 package GUI;
 
-import GameComponents.Game;
 import Infrastructure.AppManager;
 
 import javax.swing.*;
@@ -52,7 +51,7 @@ public class LoginPanel extends JPanel {
         loginButton.addActionListener(e -> {
             String usernameInput = nameField.getText();
             String passwordInput = passwordField.getText();
-            manager.validateInput(this, false, usernameInput, passwordInput);
+            manager.validateUser(this, false, usernameInput, passwordInput);
         });
 
         JPanel inputPanel = new JPanel();
@@ -126,7 +125,7 @@ public class LoginPanel extends JPanel {
         createAccount.addActionListener(e -> {
             String usernameInput = nameField.getText();
             String passwordInput = passwordField.getText();
-            manager.validateInput(this, true, usernameInput,  passwordInput);
+            manager.validateUser(this, true, usernameInput,  passwordInput);
         });
 
         JPanel inputPanel = new JPanel();
