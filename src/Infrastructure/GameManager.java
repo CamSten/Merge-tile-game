@@ -18,6 +18,8 @@ public class GameManager implements Subscriber {
     private static GameManager gameManager = new GameManager();
     private Board board;
     private List<Game> games = new ArrayList<>();
+    private List<GameSession> sessions = new ArrayList<>();
+    private int highscore = 0;
 
     private GameManager () {
     }
@@ -25,9 +27,9 @@ public class GameManager implements Subscriber {
         return gameManager;
     }
     public void initiateSession(User user, Game game, MainFrame mainFrame){
-        System.out.println("initiatesession i GameDatabase is reached.");
+        System.out.println("initiatesession i GameManager is reached.");
         this.mainFrame = mainFrame;
-        GameSession session = new GameSession(user, mediator);
+        GameSession session = new GameSession(user, highscore, mediator);
         session.subscribe();
         if (game == null) {
             System.out.println("game is null");
@@ -37,6 +39,10 @@ public class GameManager implements Subscriber {
             System.out.println("game is not null");
             session.restoreFromGame(game);
         }
+    }
+
+    void getHighscore(){
+        mediator.update(EventType.REQUEST_HIGHEST_SCORE, null);
     }
     public Game getSession(User player){
         Game g = null;
@@ -48,8 +54,7 @@ public class GameManager implements Subscriber {
         return g;
     }
     public void startNewGame(User user, List<Integer>values) {
-        this.board = new Board(values, mediator, mainFrame);
-        mainFrame.showGameBoard(values);
+        mainFrame.showGameBoard(values, highscore);
     }
 
     protected void saveScore(int score) {
@@ -96,12 +101,31 @@ public class GameManager implements Subscriber {
                 Game game = (Game) data;
                 saveGame(game);
             }
-            case  RETURN_UPDATE_TILES -> {
+            case RETURN_UPDATE_TILES -> {
                 List<Integer> values = (List<Integer>) data;
                 updateGameBoard(values);
             }
-            case  RETURN_NEW_SCORE -> {
-                System.out.println("case return new score in AppManager was reached");
+            case RETURN_EMPTY_SCORELIST -> {
+                setHighscore(0);
+                for (GameSession session : sessions){
+                    session.setHighscore(0);
+                }
+            }
+            case RETURN_HIGHEST_SCORE -> {
+                int value = (Integer) data;
+                setHighscore(value);
+                for (GameSession session : sessions){
+                    session.setHighscore(value);
+                }
+            }
+            case RETURN_NEW_HIGHSCORE -> {
+                int highestScore = (Integer) data;
+                if (highestScore > highscore) {
+                    this.highscore = highestScore;
+                    mainFrame.updateHighscoreDisplay(highscore);
+                }
+            }
+            case RETURN_NEW_SCORE -> {
                 int result = (int) data;
                 updatePoints(result);
             }
@@ -109,6 +133,7 @@ public class GameManager implements Subscriber {
                 mainFrame.showWin();
             }
             case RETURN_DISPLAY_SCORE -> {
+                getHighscore();
                 int points = (Integer) data;
                 mainFrame.updateScoreDisplay(points);
             }
@@ -119,6 +144,7 @@ public class GameManager implements Subscriber {
             case CONFIRM_FINISHED_SESSION -> {
                 GameSession endedSession = (GameSession) data;
                 mediator.unsubscribeLowerGame(endedSession);
+                mediator.update(EventType.REQUEST_HIGHEST_SCORE, endedSession.getTotalPoints());
             }
         }
     }
@@ -142,5 +168,9 @@ public class GameManager implements Subscriber {
     public void updatePoints(int points){
         System.out.println("updatePoints in MainPanel was reached, points are: " + points);
         mainFrame.updateScoreDisplay(points);
+
+    }
+    public void setHighscore(int value){
+        this.highscore = value;
     }
 }
