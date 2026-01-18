@@ -26,11 +26,13 @@ public class GameSession implements Subscriber {
     MoveStrategy moveStrategy = null;
     private boolean hasReached2048;
     private boolean victory = false;
+    private int highscore;
 
-    public GameSession(User user, Mediator mediator){
+    public GameSession(User user, int highscore, Mediator mediator){
         System.out.println("GAME SESSION CONSTRUCTOR WAS REACHED");
         this.mediator = mediator;
         this.user = user;
+        this.highscore = highscore;
     }
     public void start(){
         System.out.println("start in GameSession is reached");
@@ -71,9 +73,6 @@ public class GameSession implements Subscriber {
                 }
             }
         }
-        else {
-            System.out.println("in Board checkUpdatedTileValues, values haven't changed");
-        }
     }
     public void updateTiles() {
         this.allTileValues = new ArrayList<>();
@@ -87,15 +86,12 @@ public class GameSession implements Subscriber {
                 victory = true;
             }
         }
-//        mediator.update(EventType.RETURN_NEW_SCORE, allAdjustedValues);
-        System.out.println("in GameSession Updatetiles, values are:");
         mediator.update(eventType, allTileValues);
     }
     public void restoreFromGame(Game game){
         this.allTileValues = game.getAllValues();
         this.totalPoints = game.getPoints();
         getRestoredTiles(allTileValues);
-//        moveStrategy.move(allTileValueSubsets, mediator);
         mediator.update(EventType.RETURN_ADD_GAME_PANEL, allTileValues);
         mediator.update(EventType.RETURN_DISPLAY_SCORE, totalPoints);
     }
@@ -110,7 +106,9 @@ public class GameSession implements Subscriber {
                     System.out.println("return_Display_score in GameSession is reached. score is: " + p);
                     setTotalPoints(p);
                 }
-
+                case RETURN_HIGHEST_SCORE: {
+                    this.highscore = (Integer) o;
+                }
                 case REQUEST_NEW_GAME: {
                     start();
                     break;
@@ -158,20 +156,16 @@ public class GameSession implements Subscriber {
                     int p = (Integer) o;
                     setTotalPoints(p);
                 }
-
-//                case REQUEST_GET_SAVED_GAME: {
-//                    if (o instanceof List)
-//                }
             }
         }
     }
 
     private MoveStrategy getMoveStrategy(char c) {
         return switch (c) {
-            case 'a' -> new MoveLeftStrategy(this);
-            case 'd' -> new MoveRightStrategy(this);
-            case 'w' -> new MoveUpStrategy(this);
-            case 's' -> new MoveDownStrategy(this);
+            case 'a', 'A' -> new MoveLeftStrategy(this);
+            case 'd', 'D' -> new MoveRightStrategy(this);
+            case 'w', 'W' -> new MoveUpStrategy(this);
+            case 's', 'S' -> new MoveDownStrategy(this);
             default -> null;
         };
     }
@@ -187,14 +181,12 @@ public class GameSession implements Subscriber {
                     }
                 }
             }
-            System.out.println("indexes.size is: " + emptyIndexes.size());
             if (emptyIndexes != null) {
                 int[] randomIndex = emptyIndexes.get(random.nextInt(emptyIndexes.size()));
                 int row = randomIndex[0];
                 int col = randomIndex[1];
                 int newValue = getStartingValue();
                 allAdjustedValues.get(row).set(col, newValue);
-                System.out.println("in addTile, newvalue is: " + newValue);
                 }
                 tileAdded = true;
             }
@@ -203,6 +195,9 @@ public class GameSession implements Subscriber {
     private void setTotalPoints(int value){
         totalPoints = totalPoints + value;
         mediator.update(EventType.RETURN_NEW_SCORE, totalPoints);
+        if (totalPoints > highscore){
+            mediator.update(EventType.RETURN_NEW_HIGHSCORE, totalPoints);
+        }
     }
 
     private void getRestoredTiles (List<Integer> tileValues){
@@ -242,14 +237,6 @@ public class GameSession implements Subscriber {
         mediator.update(EventType.RETURN_ADD_GAME_PANEL, allTileValues);
     }
 
-//    private void setCoordinates() {
-//        for (Tile t : tiles) {
-//            int index = tiles.indexOf(t);
-//            t.setRow(index / rows);
-//            t.setCol(index % cols);
-//        }
-//    }
-
     private int getStartingValue() {
         Random random = new Random();
         List<Integer> values = new ArrayList<>();
@@ -273,9 +260,6 @@ public class GameSession implements Subscriber {
         return hasReached2048;
     }
     private void gameOverActions() {
-        System.out.println("gameOverActions in GameSession is reached");
-        System.out.println("in Board, score is: " + totalPoints);
-        EventType eventType = null;
         saveScore();
         if (check2048()){
             win = true;
@@ -288,7 +272,6 @@ public class GameSession implements Subscriber {
         mediator.update(EventType.CONFIRM_FINISHED_SESSION, this);
     }
     private boolean hasPossibleMoves(List<List<Integer>>allAdjustedValues) {
-        System.out.println("hasPossibleMoves in gameSession is reached");
         Move move = new Move(this, allAdjustedValues, mediator);
         return move.hasMergeableMoves();
     }
@@ -296,9 +279,7 @@ public class GameSession implements Subscriber {
     private void setMoveStrategy(MoveStrategy strategy){
         this.strategy = strategy;
     }
-//    public List<Tile> getTiles(){
-//        return tiles;
-//    }
+
     public int getRows(){
         return rows;
     }
@@ -331,7 +312,6 @@ public class GameSession implements Subscriber {
     }
     protected void saveScore(){
         Score score = new Score(this);
-        System.out.println("in GameSession saveScore, score is: " + score.getTotalScore());
         mediator.update(EventType.REQUEST_SAVE_SCORE, score);
     }
     public User getUser(){
@@ -342,5 +322,8 @@ public class GameSession implements Subscriber {
     }
     public int getTotalPoints(){
         return totalPoints;
+    }
+    public void setHighscore(int value){
+        this.highscore = value;
     }
 }

@@ -1,35 +1,28 @@
 package GUI;
 
-import GUI.Game.GameColors;
 import GUI.Game.GameFont;
-import Server.Database.HighscorePrintout;
 import Server.Database.HighscoreDatabase;
+import Server.Database.HighscoreEntry;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicBorders;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class HighscorePanel extends JPanel {
-    private List<String>scores = new ArrayList<>();
-    private List<String[]>scorePrintout = new ArrayList<>();
-    private HighscoreDatabase.ScoreValue scoreValue;
-    HighscorePrintout highscorePrintout;
+    List<HighscoreEntry> highscoreEntries;
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy HH:mm");
 
-    public HighscorePanel(HighscorePrintout highscorePrintout) {
-        this.highscorePrintout = highscorePrintout;
-        if (highscorePrintout != null) {
-            this.scorePrintout = highscorePrintout.getScorePrintout();
+    public HighscorePanel(List<HighscoreEntry> highscoreEntries) {
+        this.highscoreEntries = highscoreEntries;
+        if (highscoreEntries != null) {
             sortList(HighscoreDatabase.ScoreValue.POINTS);
-            this.scoreValue = highscorePrintout.getScoreValue();
             System.out.println("highscorePanel constructor is reached");
-            this.scores = scores;
             setLayout(new BorderLayout());
             JPanel scorePanel = new JPanel(new BorderLayout());
             scorePanel.setBackground(Color.DARK_GRAY);
@@ -132,7 +125,6 @@ public class HighscorePanel extends JPanel {
 
             scorePanel.add(header, BorderLayout.NORTH);
             scorePanel.add(centerPanel, BorderLayout.CENTER);
-//        scorePanel.setBackground(GameColors.defaultBackground());
             scorePanel.setVisible(true);
             scorePanel.setBorder(
                     BorderFactory.createLineBorder(GUI.Game.GameColors.headerText(), 4, true));
@@ -141,60 +133,46 @@ public class HighscorePanel extends JPanel {
     }
 
     private String scorePrintout(HighscoreDatabase.ScoreValue scoreValue){
-        List<String> highscorePrintoutScoreSubset = highscorePrintout.getScoreSubset(scoreValue);
         String printout = "";
-        System.out.println("in HighscorePanel, scoreValue is: " + scoreValue);
-        for (String s : highscorePrintoutScoreSubset){
-            System.out.println("in scorePrintout, s is: " + s);
-            printout = printout + "\n" + s;
+        for (HighscoreEntry entry : highscoreEntries) {
+            switch (scoreValue) {
+                case NAME -> {
+                    printout += entry.getName() + "\n";
+                    break;
+                }
+                case POINTS -> {
+                    printout += entry.getPoints() + "\n";
+                    break;
+                }
+                case DATE -> {
+                    printout += entry.getFormattedDate() + "\n";
+                    break;
+
+                }
+            }
         }
         return printout;
     }
     public void sortList(HighscoreDatabase.ScoreValue scoreValue){
-        List<String[]> values = scorePrintout;
-        boolean changePlace = false;
-        if (!values.isEmpty()) {
-
-            for (int pass = 0; pass < values.size() -1; pass++) {
-                for (int i = 1; i < values.size() - pass; i++) {
-                    switch (scoreValue) {
-                        case NAME: {
-                            String score1 = values.get(i)[0];
-                            String score2 = values.get(i - 1)[0];
-                            changePlace = score1.compareToIgnoreCase(score2) < 0;
-                            break;
-                        }
-                        case POINTS: {
-                            int score1 = Integer.parseInt(values.get(i)[1].trim());
-                            int score2 = Integer.parseInt(values.get(i - 1)[1].trim());
-                            changePlace =  score2 < score1;
-                            break;
-                        }
-                        case DATE: {
-                            LocalDateTime score1 = LocalDateTime.parse(values.get(i)[2], formatter);
-                            LocalDateTime score2 = LocalDateTime.parse(values.get(i - 1)[2], formatter);
-                            changePlace = score1.isAfter(score2);
-                            break;
-                        }
-                    }
-                    if (changePlace) {
-                        String[] temp = values.get(i-1);
-                        values.set(i-1, values.get(i));
-                        values.set(i, temp);
-                    }
-                }
+        switch (scoreValue){
+            case NAME -> {
+                highscoreEntries.sort(
+                        Comparator.comparing(HighscoreEntry::getName).reversed()
+                );
+                break;
+            }
+            case POINTS -> {
+                highscoreEntries.sort(
+                        Comparator.comparingInt(HighscoreEntry::getPoints).reversed()
+                );
+                break;
+            }
+            case DATE -> {
+                highscoreEntries.sort(
+                        Comparator.comparing(HighscoreEntry::getDate).reversed()
+                );
+                break;
             }
         }
-//        scoreList.clear();
-//        for (String [] score : values) {
-//            StringBuilder sb = new StringBuilder();
-//            for (int j = 0; j < score.length; j++) {
-//                sb.append(score[j]);
-//                if (j < score.length -1){
-//                    sb.append(";");
-//                }
-//            }
-//            scoreList.add(sb.toString());
-//        }
     }
 }
