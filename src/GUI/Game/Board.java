@@ -106,7 +106,7 @@ public class Board extends JPanel {
     }
 
     protected void assessKeyAction(char c) {
-        mainFrame.update(Subscriber.EventType.REQUEST_KEY_ACTION, c);
+        mediator.update(Subscriber.EventType.REQUEST_KEY_ACTION, c);
     }
 
     public void updateTileBoard(List<Integer> allValues){

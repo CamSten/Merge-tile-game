@@ -52,7 +52,7 @@ public class GameSession implements Subscriber {
         }
     }
 
-    public void handleMove(MoveResult result) {
+    private void handleMove(MoveResult result) {
         System.out.println("In GameSession, checkUpdatedTileValues is reached");
         this.allAdjustedValues = result.getNewValues();
         this.allTileValueSubsets = allAdjustedValues;
@@ -74,7 +74,7 @@ public class GameSession implements Subscriber {
             }
         }
     }
-    public void updateTiles() {
+    private void updateTiles() {
         this.allTileValues = new ArrayList<>();
         for (List<Integer> list : allAdjustedValues) {
             allTileValues.addAll(list);
