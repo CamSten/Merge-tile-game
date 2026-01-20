@@ -53,24 +53,17 @@ public class GameSession implements Subscriber {
     }
 
     private void handleMove(MoveResult result) {
-        System.out.println("In GameSession, checkUpdatedTileValues is reached");
         this.allAdjustedValues = result.getNewValues();
         this.allTileValueSubsets = allAdjustedValues;
         setTotalPoints(result.getPoints());
         mediator.update(EventType.RETURN_DISPLAY_SCORE, totalPoints);
         if (result.hasValuesChanged()) {
-            if (completed(allAdjustedValues)) {
+            addTile(allAdjustedValues);
+            if (completed(allAdjustedValues)){
                 gameOverActions();
-            } else {
-                System.out.println("IN GAME SESSION, addTile is called");
-                addTile(allAdjustedValues);
-                if (completed(allAdjustedValues)){
-                    System.out.println("in GAMESESSION, full is true");
-                    gameOverActions();
-                }
-                else {
-                    updateTiles();
-                }
+            }
+            else {
+                updateTiles();
             }
         }
     }
@@ -187,9 +180,9 @@ public class GameSession implements Subscriber {
                 int col = randomIndex[1];
                 int newValue = getStartingValue();
                 allAdjustedValues.get(row).set(col, newValue);
-                }
-                tileAdded = true;
             }
+            tileAdded = true;
+        }
     }
 
     private void setTotalPoints(int value){
@@ -272,8 +265,31 @@ public class GameSession implements Subscriber {
         mediator.update(EventType.CONFIRM_FINISHED_SESSION, this);
     }
     private boolean hasPossibleMoves(List<List<Integer>>allAdjustedValues) {
-        Move move = new Move(this, allAdjustedValues, mediator);
-        return move.hasMergeableMoves();
+        for (List<Integer> row : allAdjustedValues) {
+            if (row.contains(0)) {
+                return true;
+            }
+        }
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols - 1; c++) {
+                System.out.println("row check: " + c);
+                if (allAdjustedValues.get(r).get(c).equals(allAdjustedValues.get(r).get(c + 1))) {
+                    System.out.println("in hasPossibleMoves, result is true");
+                    return true;
+                }
+            }
+        }
+        for (int r = 0; r < rows - 1; r++) {
+            for (int c = 0; c < cols; c++) {
+                System.out.println("col check: "+ c);
+                if (allAdjustedValues.get(r).get(c).equals(allAdjustedValues.get(r + 1).get(c))) {
+                    System.out.println("in hasPossibleMoves, result is true");
+                    return true;
+                }
+            }
+        }
+        System.out.println("in hasPossibleMoves, result is false");
+        return false;
     }
 
     private void setMoveStrategy(MoveStrategy strategy){
@@ -291,24 +307,7 @@ public class GameSession implements Subscriber {
     }
 
     private boolean completed(List<List<Integer>> allAdjustedTileValues){
-        System.out.println("CHECK IF COMPLETE IN GAME SESSION IS REACHED");
-        int emptyTile = 0;
-        for(List<Integer> l : allAdjustedTileValues){
-            for(int i : l) {
-                if (i == 0) {
-                    emptyTile += 1;
-                }
-            }
-        }
-        if (emptyTile <= 0) {
-            if (hasPossibleMoves(allAdjustedTileValues)) {
-                return false;
-            }
-            else {
-                return true;
-            }
-        }
-        return false;
+        return !hasPossibleMoves(allAdjustedTileValues);
     }
     protected void saveScore(){
         Score score = new Score(this);
