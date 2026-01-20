@@ -1,13 +1,8 @@
 package Infrastructure;
-
-import GUI.Game.Board;
 import GUI.MainFrame;
 import GameComponents.Game;
 import GameComponents.GameSession;
-import Server.Database.GameDatabase;
-import Server.Database.HighscoreDatabase;
 import Server.Database.User;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +11,6 @@ public class GameManager implements Subscriber {
     private List<Game> savedGames;
     private MainFrame mainFrame;
     private static GameManager gameManager = new GameManager();
-    private Board board;
     private List<Game> games = new ArrayList<>();
     private List<GameSession> sessions = new ArrayList<>();
     private int highscore = 0;
@@ -27,20 +21,16 @@ public class GameManager implements Subscriber {
         return gameManager;
     }
     public void initiateSession(User user, Game game, MainFrame mainFrame){
-        System.out.println("initiatesession i GameManager is reached.");
         this.mainFrame = mainFrame;
         GameSession session = new GameSession(user, highscore, mediator);
         session.subscribe();
         if (game == null) {
-            System.out.println("game is null");
             session.start();
         }
         else {
-            System.out.println("game is not null");
             session.restoreFromGame(game);
         }
     }
-
     void getHighscore(){
         mediator.update(EventType.REQUEST_HIGHEST_SCORE, null);
     }
@@ -56,11 +46,6 @@ public class GameManager implements Subscriber {
     public void startNewGame(User user, List<Integer>values) {
         mainFrame.showGameBoard(values, highscore);
     }
-
-    protected void saveScore(int score) {
-        System.out.println("In Game, score is: " + score);
-//        HighscoreDatabase.saveScore(user, score);
-    }
     private void saveGame(Game game){
         for (Game g : games){
             if (g.getUser().getUsername().equalsIgnoreCase(game.getUser().getUsername())){
@@ -69,33 +54,12 @@ public class GameManager implements Subscriber {
         }
         savedGames.add(game);
     }
-    private void getSavedGame(User user){
-        Game savedGame = null;
-        if (!savedGames.isEmpty()){
-            for (Game g : savedGames){
-                if (g.getUser().equals(user.getUsername())){
-                    savedGame = g;
-                }
-            }
-        }
-        if (savedGame != null) {
-            mediator.update(EventType.RETURN_GET_SAVED_GAME_TRUE, savedGame.getAllValues());
-        }
-        else {
-            mediator.update(EventType.RETURN_GET_SAVED_GAME_FALSE, savedGame.getAllValues());
-        }
-    }
-
     public void subscribe(Mediator mediator){
         this.mediator = mediator;
         mediator.subscribe(this);
     }
     @Override
     public void update(EventType e, Object data) {
-        System.out.println("____ UPDATE in GAME MANAGER IS REACHED, eventType is: " + e);
-        if (data != null){
-            System.out.println("data is: " + data.getClass());
-        }
         switch (e){
             case REQUEST_SAVE_GAME_EXECUTE-> {
                 Game game = (Game) data;
@@ -142,7 +106,7 @@ public class GameManager implements Subscriber {
             case REQUEST_REMOVE_GAME->  {
                 Game endedGame = (Game) data;
                 removeGame(endedGame);
-             }
+            }
             case CONFIRM_FINISHED_SESSION -> {
                 GameSession endedSession = (GameSession) data;
                 mediator.unsubscribeLowerGame(endedSession);
@@ -151,8 +115,6 @@ public class GameManager implements Subscriber {
         }
     }
     private void removeGame(Game endedGame){
-        System.out.println("removeGame in GAME MANAGER is reached");
-
         Game target = null;
         for (Game g : games){
             if (g.getUser().getUsername().equalsIgnoreCase(endedGame.getUser().getUsername())){
@@ -168,9 +130,7 @@ public class GameManager implements Subscriber {
         mainFrame.updateBoard(values);
     }
     public void updatePoints(int points){
-        System.out.println("updatePoints in MainPanel was reached, points are: " + points);
         mainFrame.updateScoreDisplay(points);
-
     }
     public void setHighscore(int value){
         this.highscore = value;

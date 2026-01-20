@@ -1,18 +1,14 @@
 package GUI;
-
 import Infrastructure.AppManager;
 import Server.Database.HighscoreDatabase;
 import Infrastructure.Subscriber;
 import Server.Database.User;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MenuPanel extends JPanel{
-    private static int rows = 4;
-    private static int cols = 4;
     private static JPanel centerPanel;
     private JPanel topPanel;
     private JPanel bottomPanel;
@@ -25,11 +21,8 @@ public class MenuPanel extends JPanel{
         if (bottomPanel != null ){
             bottomPanel.removeAll();
         }
-        System.out.println("menuPanel constructor is reached, hasSavedGame is: " + hasSavedGame);
-
         this.manager = manager;
         this.user = user;
-
         setVisible(true);
         setLayout(new BorderLayout());
         setEnabled(true);
@@ -39,9 +32,6 @@ public class MenuPanel extends JPanel{
         centerPanel.setBackground(backgroundColor);
         add(centerPanel, BorderLayout.CENTER);
         showMainMenu(hasSavedGame);
-//        bottomPanel = new JPanel();
-//        bottomPanel.setOpaque(true);
-//        add(bottomPanel, BorderLayout.SOUTH);
         repaint();
         revalidate();
     }
@@ -50,18 +40,15 @@ public class MenuPanel extends JPanel{
         JLabel welcomeLabel = new JLabel("Welcome, " + user.getUsername());
         welcomeLabel.setFont(GUI.Game.GameFont.topHeaderFont());
         welcomeLabel.setForeground(GUI.Game.GameColors.headerText());
-//        topPanel.add(points);
         topPanel.add(welcomeLabel);
         topPanel.setBackground(backgroundColor);
         topPanel.setVisible(true);
         add(topPanel, BorderLayout.NORTH);
-        System.out.println("showMainMenu in MenuPanel is reached, hasSavedGame is: " + hasSavedGame);
         if (centerPanel != null) {
             centerPanel.removeAll();
         }
         JPanel menuButtons = new JPanel(new GridLayout(3, 1));
         menuButtons.setBackground(backgroundColor);
-
         JButton startGame = new JButton("Start new game");
         startGame.setBackground(backgroundColor);
         startGame.setFont(GUI.Game.GameFont.topHeaderFont());
@@ -75,7 +62,6 @@ public class MenuPanel extends JPanel{
             }
         });
         menuButtons.add(startGame);
-
         if (hasSavedGame) {
             JButton savedGame = new JButton("Continue game");
             savedGame.setBackground(backgroundColor);
@@ -91,7 +77,6 @@ public class MenuPanel extends JPanel{
             });
             menuButtons.add(savedGame);
         }
-
         JButton seeHighscores = new JButton("See highscores");
         seeHighscores.setBackground(backgroundColor);
         seeHighscores.setFont(GUI.Game.GameFont.topHeaderFont());
@@ -101,7 +86,6 @@ public class MenuPanel extends JPanel{
         seeHighscores.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("showHighscorePanel is called from main Panel");
                 manager.update(Subscriber.EventType.REQUEST_ALL_HIGHSCORES, scoreValue);
             }
         });

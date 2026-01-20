@@ -1,7 +1,5 @@
 package Infrastructure;
-
 public interface Subscriber {
-
     public enum EventType {
         REQUEST_VALIDATE_USER,
         RETURN_EXISTING_USER,

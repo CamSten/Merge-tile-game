@@ -1,7 +1,6 @@
 package GameComponents.Moves;
 import GameComponents.GameSession;
 import Infrastructure.Mediator;
-
 import java.util.List;
 
 public class MoveUpStrategy implements MoveStrategy{
@@ -11,14 +10,10 @@ public class MoveUpStrategy implements MoveStrategy{
     private Move move;
 
     public MoveUpStrategy(GameSession game){
-        System.out.println("move UP strategy was reached");
         this.game = game;
     }
-
     public void move(List<List<Integer>> allTileValues, Mediator mediator){
         this.move = new Move(game, allTileValues, mediator);
         move.assessMovement(reversed, horizontal);
     }
-
-
 }

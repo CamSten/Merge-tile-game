@@ -1,5 +1,4 @@
 package GUI.Game;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -26,14 +25,12 @@ public class Tile extends JLabel{
         setHorizontalAlignment(SwingConstants.CENTER);
         setVerticalAlignment(SwingConstants.CENTER);
         setMinimumSize(new Dimension(tileSize, tileSize));
-//        setFont(GameFont.topHeaderFont());
         setFont(new Font("Arial",Font.BOLD, 26));
         if (value > 0) {
             setText(String.valueOf(value));
             setForeground(textColor);
         }
     }
-
     public static void adjustTile(Tile tile, int value){
         tile.setValue(value);
         if (tile.getValue() > 0){
@@ -55,18 +52,15 @@ public class Tile extends JLabel{
         int exponent = 0;
         double newvalue = 0;
         double newValue = Math.sqrt(value);
-            for (int i = 0; i < value; i++){
-                double number = Math.pow (base, i);
-                if (number == value){
-                    exponent = i;
-                }
+        for (int i = 0; i < value; i++){
+            double number = Math.pow (base, i);
+            if (number == value){
+                exponent = i;
             }
-
-
+        }
         TileColor tileColor = new TileColor(exponent);
         return tileColor.getColor();
     }
-
     public int getValue(){
         return value;
     }
@@ -75,21 +69,6 @@ public class Tile extends JLabel{
     }
     public Color getColor(){
         return color;
-    }
-    public int getRow(){
-        return row;
-    }
-    public int getCol(){
-        return col;
-    }
-    public int[] getPosition(){
-        return new int[]{row, col};
-    }
-    public void setCol(int newCol){
-        col = newCol;
-    }
-    public void setRow (int newRow){
-        row = newRow;
     }
     public void setValue(int newValue){
         this.value = newValue;
