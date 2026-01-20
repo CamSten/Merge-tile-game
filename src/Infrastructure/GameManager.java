@@ -130,6 +130,8 @@ public class GameManager implements Subscriber {
                 updatePoints(result);
             }
             case REQUEST_CONTINUE_GAME -> {
+                List<Integer> values = (List<Integer>) data;
+                updateGameBoard(values);
                 mainFrame.showWin();
             }
             case RETURN_DISPLAY_SCORE -> {
