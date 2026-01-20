@@ -3,8 +3,6 @@ import GameComponents.Moves.*;
 import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
 import Server.Database.User;
-
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,7 +12,6 @@ public class GameSession implements Subscriber {
     Mediator mediator;
     boolean tileAdded = false;
     private User user;
-    private MoveStrategy strategy;
     boolean win = false;
     boolean continueAfterWin = false;
     int totalPoints;
@@ -29,29 +26,24 @@ public class GameSession implements Subscriber {
     private int highscore;
 
     public GameSession(User user, int highscore, Mediator mediator){
-        System.out.println("GAME SESSION CONSTRUCTOR WAS REACHED");
         this.mediator = mediator;
         this.user = user;
         this.highscore = highscore;
     }
     public void start(){
-        System.out.println("start in GameSession is reached");
         totalPoints = 0;
         allTileValues.clear();
         allTileValueSubsets.clear();
         allAdjustedValues.clear();
         getStartingTiles();
     }
-
     public void assessKeyAction(char c){
-        System.out.println("assessKeyAction in GameSession is reached. c is: " + c);
         tileAdded = false;
         this.moveStrategy = getMoveStrategy(c);
         if (moveStrategy != null) {
             moveStrategy.move(allTileValueSubsets, mediator);
         }
     }
-
     private void handleMove(MoveResult result) {
         this.allAdjustedValues = result.getNewValues();
         this.allTileValueSubsets = allAdjustedValues;
@@ -88,15 +80,12 @@ public class GameSession implements Subscriber {
         mediator.update(EventType.RETURN_ADD_GAME_PANEL, allTileValues);
         mediator.update(EventType.RETURN_DISPLAY_SCORE, totalPoints);
     }
-
     @Override
     public void update(EventType e, Object o) {
-        System.out.println("update in GameSession is reached. Eventtype is: " + e);
         if (e != null) {
             switch (e) {
                 case RETURN_NEW_SCORE:{
                     int p = (Integer) o;
-                    System.out.println("return_Display_score in GameSession is reached. score is: " + p);
                     setTotalPoints(p);
                 }
                 case RETURN_HIGHEST_SCORE: {
@@ -132,11 +121,6 @@ public class GameSession implements Subscriber {
                     break;
                 }
                 case REQUEST_SAVE_GAME_INITIATE:{
-                    System.out.println("in RequestSaveGame, totalPoints is: " + totalPoints);
-                    System.out.println("in GameSession case save_game_initiate is reached.");
-                    if (o != null){
-                        System.out.println("data is: " + o.getClass());
-                    }
                     if (o instanceof User u) {
                         if (user.getUsername() == u.getUsername()) {
                             Game newgame = new Game(user, allTileValues, totalPoints);
@@ -152,7 +136,6 @@ public class GameSession implements Subscriber {
             }
         }
     }
-
     private MoveStrategy getMoveStrategy(char c) {
         return switch (c) {
             case 'a', 'A' -> new MoveLeftStrategy(this);
@@ -184,7 +167,6 @@ public class GameSession implements Subscriber {
             tileAdded = true;
         }
     }
-
     private void setTotalPoints(int value){
         totalPoints = totalPoints + value;
         mediator.update(EventType.RETURN_NEW_SCORE, totalPoints);
@@ -192,7 +174,6 @@ public class GameSession implements Subscriber {
             mediator.update(EventType.RETURN_NEW_HIGHSCORE, totalPoints);
         }
     }
-
     private void getRestoredTiles (List<Integer> tileValues){
         List<List<Integer>> values = new ArrayList<>();
         for (int i = 0; i < rows; i++){
@@ -203,7 +184,6 @@ public class GameSession implements Subscriber {
         this.allTileValueSubsets = values;
     }
     private void getStartingTiles() {
-        System.out.println("in GameSession, getStartingTiles was reached");
         this.allTileValueSubsets = new ArrayList<>();
         for (int i = 0; i < rows; i++){
             List<Integer> subset = new ArrayList<>();
@@ -212,7 +192,6 @@ public class GameSession implements Subscriber {
             }
             allTileValueSubsets.add(subset);
         }
-
         int startValueOne = getStartingValue();
         int startValueTwo = getStartingValue();
         List<Integer> valueSubsetOne = allTileValueSubsets.getFirst();
@@ -229,7 +208,6 @@ public class GameSession implements Subscriber {
         }
         mediator.update(EventType.RETURN_ADD_GAME_PANEL, allTileValues);
     }
-
     private int getStartingValue() {
         Random random = new Random();
         List<Integer> values = new ArrayList<>();
@@ -272,40 +250,26 @@ public class GameSession implements Subscriber {
         }
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols - 1; c++) {
-                System.out.println("row check: " + c);
                 if (allAdjustedValues.get(r).get(c).equals(allAdjustedValues.get(r).get(c + 1))) {
-                    System.out.println("in hasPossibleMoves, result is true");
                     return true;
                 }
             }
         }
         for (int r = 0; r < rows - 1; r++) {
             for (int c = 0; c < cols; c++) {
-                System.out.println("col check: "+ c);
                 if (allAdjustedValues.get(r).get(c).equals(allAdjustedValues.get(r + 1).get(c))) {
-                    System.out.println("in hasPossibleMoves, result is true");
                     return true;
                 }
             }
         }
-        System.out.println("in hasPossibleMoves, result is false");
         return false;
     }
-
-    private void setMoveStrategy(MoveStrategy strategy){
-        this.strategy = strategy;
-    }
-
     public int getRows(){
         return rows;
     }
     public int getCols(){
         return cols;
     }
-    public List<List<Integer>> getAllTileValueSubsets(){
-        return allTileValueSubsets;
-    }
-
     private boolean completed(List<List<Integer>> allAdjustedTileValues){
         return !hasPossibleMoves(allAdjustedTileValues);
     }

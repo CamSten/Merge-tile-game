@@ -5,10 +5,8 @@ import GameComponents.GameSession;
 import Infrastructure.AppManager;
 import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
-import Server.Database.HighscoreDatabase;
 import Server.Database.HighscoreEntry;
 import Server.Database.User;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -27,25 +25,19 @@ public class MainFrame extends JFrame {
     private MenuPanel menuPanel;
     private JPanel bottomPanel;
     private Color backgroundColor = Color.darkGray;
-    private Color foregroundColor = Color.lightGray;
     private User user;
-    private GameSession game;
-    java.util.List<Subscriber> subscribers;
     private AppManager manager;
     private Mediator mediator;
-    HighscoreDatabase.ScoreValue scoreValue = HighscoreDatabase.ScoreValue.DATE;
     JButton backToMenu;
 
     public MainFrame(Mediator mediator, AppManager manager) {
         if (bottomPanel != null ){
             bottomPanel.removeAll();
         }
-        System.out.println("mainPanel constructor is reached");
         this.manager = manager;
         this.mediator = mediator;
         this.rows = rows;
         this.cols = cols;
-
         setVisible(true);
         setLayout(new BorderLayout());
         setEnabled(true);
@@ -88,7 +80,6 @@ public class MainFrame extends JFrame {
         pack();
     }
     public void showMenuPanel(User user, boolean hasSavedGame){
-        System.out.println("showMenuPanel in MainFrame is reached, hasSavedGame is: " + hasSavedGame);
         if (bottomPanel != null){
             bottomPanel.removeAll();
         }
@@ -99,10 +90,8 @@ public class MainFrame extends JFrame {
         revalidate();
         pack();
     }
-
     public void showEndPanel(int points, boolean highestScore) {
         centerPanel.removeAll();
-        System.out.println("updateCenterPanel was reached");
         EndPanel endPanel = new EndPanel(manager, points, highestScore);
         centerPanel.add(endPanel, BorderLayout.CENTER);
         JButton newGame = new JButton("Start new game");
@@ -117,7 +106,6 @@ public class MainFrame extends JFrame {
                 manager.update(Subscriber.EventType.REQUEST_NEW_GAME, user);
             }
         });
-
         bottomPanel.add(newGame, BorderLayout.WEST);
         addReturnButton();
         repaint();
@@ -136,7 +124,6 @@ public class MainFrame extends JFrame {
             backToMenu.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("from endPanel, return_add_menu_panel is called");
                     manager.update(Subscriber.EventType.REQUEST_ADD_MENU_PANEL, null);
                 }
             });
@@ -144,12 +131,10 @@ public class MainFrame extends JFrame {
         bottomPanel.add(backToMenu, BorderLayout.WEST);
         bottomPanel.setVisible(true);
         bottomPanel.setBackground(backgroundColor);
-
         repaint();
         revalidate();
         pack();
     }
-
     public void showHighscorePanel(List<HighscoreEntry> entries) {
         centerPanel.removeAll();
         this.highscorePanel = new HighscorePanel(entries);
@@ -165,11 +150,9 @@ public class MainFrame extends JFrame {
         }
     }
     public void showGameBoard(List<Integer> values, int highscore) {
-        System.out.println("in mainPanel, showGameBoard is reached");
         centerPanel.removeAll();
         repaint();
         this.board = new Board(values, highscore, mediator, this);
-
         if (bottomPanel != null){
             bottomPanel.removeAll();
         }
@@ -217,4 +200,3 @@ public class MainFrame extends JFrame {
         manager.assessContinue(choice);
     }
 }
-

@@ -1,7 +1,5 @@
 package GUI;
-
 import Infrastructure.AppManager;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -20,7 +18,6 @@ public class LoginPanel extends JPanel {
         showLoginPanel();
     }
     private void showLoginPanel(){
-        System.out.println("showLoginPanel is reached");
         JLabel welcomeLabel = new JLabel("Welcome!");
         welcomeLabel.setFont(GUI.Game.GameFont.topHeaderFont());
         welcomeLabel.setForeground(GUI.Game.GameColors.headerText());
@@ -53,20 +50,17 @@ public class LoginPanel extends JPanel {
             String passwordInput = passwordField.getText();
             manager.validateUser(this, false, usernameInput, passwordInput);
         });
-
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
         inputPanel.setBackground(backgroundColor);
         inputPanel.add(inputFields);
         inputPanel.add(loginButton);
-
         JButton newUserButton = new JButton("Create account");
         newUserButton.setForeground(GUI.Game.GameColors.headerText());
         newUserButton.setFont(GUI.Game.GameFont.headerFont());
         newUserButton.addActionListener(e -> {
             createNewAccount();
         });
-
         centerPanel.setLayout(new BorderLayout());
         centerPanel.add(welcomeLabel, BorderLayout.NORTH);
         centerPanel.add(inputPanel, BorderLayout.CENTER);
@@ -94,10 +88,8 @@ public class LoginPanel extends JPanel {
         JOptionPane.showMessageDialog(this, "The password is incorrect.");
     }
     public void createNewAccount(){
-        System.out.println("createNewAccount in LoginPanel is reached");
         String username = nameField.getText();
         centerPanel.removeAll();
-
         JLabel prompt = new JLabel("Create a new account: ");
         prompt.setFont(GUI.Game.GameFont.topHeaderFont());
         prompt.setForeground(GUI.Game.GameColors.headerText());
@@ -112,7 +104,6 @@ public class LoginPanel extends JPanel {
         inputFields.setPreferredSize(new Dimension(400, 80));
         inputFields.setMinimumSize(new Dimension(400, 80));
         inputFields.setMaximumSize(new Dimension(400, 80));
-
         inputFields.add(usernameLabel);
         inputFields.add(nameField);
         nameField.setText(username);
@@ -127,13 +118,11 @@ public class LoginPanel extends JPanel {
             String passwordInput = passwordField.getText();
             manager.validateUser(this, true, usernameInput,  passwordInput);
         });
-
         JPanel inputPanel = new JPanel();
         inputPanel.setBackground(backgroundColor);
         inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
         inputPanel.add(inputFields);
         inputPanel.add(createAccount);
-
         JButton returnButton = new JButton("Cancel");
         returnButton.setForeground(GUI.Game.GameColors.headerText());
         returnButton.setFont(GUI.Game.GameFont.headerFont());

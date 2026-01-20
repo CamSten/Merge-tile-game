@@ -18,14 +18,12 @@ public class Move {
     private int points;
 
     public Move(GameSession game, List<List<Integer>> allBoardSubsets, Mediator mediator) {
-        System.out.println("----Move constructor was reached");
         this.mediator = mediator;
         this.gameSession = game;
         this.allBoardSubsets = allBoardSubsets;
         this.rows = game.getRows();
         this.cols = game.getCols();
     }
-
     public void assessMovement(boolean reversed, boolean horizontal) {
         this.points = 0;
         this.reversed = reversed;
@@ -72,39 +70,12 @@ public class Move {
                 }
             }
             mediator.update(Subscriber.EventType.RETURN_NEW_POINTS, points);
-            System.out.println("in Move, points is: " + points);
         }
         while (adjustedValues.size() < subset.size()) {
             adjustedValues.add(0);
         }
         this.adjustedValues = adjustedValues;
         return adjustedValues;
-    }
-    public boolean hasMergeableMoves() {
-        System.out.println("hasMergeableMoves in Move was reached");
-        List<List<Integer>> rows = getAllBoardSubsets(true);
-        if (hasMergeableNeighbours(rows)) {
-            System.out.println("mergeable");
-            return true;
-        }
-        List<List<Integer>> cols = getAllBoardSubsets(false);
-        if (hasMergeableNeighbours(cols)) {
-            System.out.println("mergeable");
-            return true;
-        }
-        System.out.println("unmergeable");
-        return false;
-    }
-
-    private boolean hasMergeableNeighbours(List<List<Integer>> subsets) {
-        for (List<Integer> line : subsets) {
-            for (int i = 0; i < line.size() - 1; i++) {
-                if (line.get(i).equals(line.get(i + 1))) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
     private List<List<Integer>> getCorrectOrder(List<List<Integer>> adjustedValues){
         List<List<Integer>> valuesInOrder = new ArrayList<>();
@@ -117,7 +88,6 @@ public class Move {
         }
         return valuesInOrder;
     }
-
     private List<List<Integer>> getAllBoardSubsets(boolean horizontal) {
         int count;
         if (horizontal) {
@@ -125,14 +95,12 @@ public class Move {
         } else {
             count = cols;
         }
-
         List<List<Integer>> tileSubsets = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             tileSubsets.add(getSubset(i, horizontal));
         }
         return tileSubsets;
     }
-
     private static boolean hasValuesChanged(List<List<Integer>> allSubsetValues, List<List<Integer>> allAdjustedValues) {
         for (int i = 0; i < allSubsetValues.size(); i++){
             List<Integer> valueSubset = allSubsetValues.get(i);
@@ -145,14 +113,12 @@ public class Move {
         }
         return false;
     }
-
     public List<Integer> getSubset(int index, boolean horizontal) {
         List<Integer> values = new ArrayList<>();
         for (List<Integer> l : allBoardSubsets) {
             values.addAll(l);
         }
         List<Integer> subset = new ArrayList<>();
-
         if (horizontal) {
             int start = index * cols;
             return new ArrayList<>(values.subList(start, start + cols));
@@ -163,33 +129,7 @@ public class Move {
             return subset;
         }
     }
-
-    private boolean isCompleted(){
-        if (isFull()) {
-            System.out.println("----------------------in Move, full is true");
-            for (int i = 0; i < adjustedValues.size(); i++) {
-                if (i < adjustedValues.size() - 1 && adjustedValues.get(i).equals(adjustedValues.get(i + 1))) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    private boolean isFull() {
-        System.out.println("______________ isFull in Move is reached");
-        int numberOfValueTiles = 0;
-        for (List<Integer> l : allBoardSubsets) {
-            for (Integer i : l) {
-                if (i > 0) {
-                    numberOfValueTiles += 1;
-                }
-            }
-        }
-        return numberOfValueTiles == rows * cols;
-    }
     private void setPoints(int value){
-        System.out.println("in setPoints, value is:" + value );
         points += value;
-        System.out.println("and points is thus: " + points);
     }
 }

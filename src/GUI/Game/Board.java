@@ -1,9 +1,6 @@
 package GUI.Game;
 import GUI.MainFrame;
 import GameComponents.Moves.*;
-import GameComponents.Score;
-import Infrastructure.AppManager;
-import Infrastructure.GameManager;
 import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
 import javax.swing.*;
@@ -15,9 +12,6 @@ import java.util.List;
 
 public class Board extends JPanel {
     private MainFrame mainFrame;
-    private MoveStrategy strategy;
-    private boolean win = false;
-    private boolean continueAfterWin = false;
     private JPanel centerPanel;
     private JPanel topPanel;
     private JTextArea scoreDisplay;
@@ -28,7 +22,6 @@ public class Board extends JPanel {
     private int cols = 4;
     private Mediator mediator;
     private Color backgroundColor = Color.darkGray;
-    private List<Integer>allValues;
 
     public Board(List<Integer> values, int highscore, Mediator mediator, MainFrame mainFrame) {
         this.mediator = mediator;
@@ -72,17 +65,14 @@ public class Board extends JPanel {
             Tile emptyTile = new Tile(0, true, Color.lightGray, i / cols, i % cols);
             tiles.add(emptyTile);
             centerPanel.add(emptyTile);
-            System.out.println("tile added");
         }
         updateTileBoard(values);
-
         addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
                 System.out.println("keyTyped was reached");            }
             @Override
             public void keyPressed(KeyEvent e) {
-                System.out.println("keyPressed was reached");
                 List<Character> actionCharacters = new ArrayList<>();
                 actionCharacters.add('w');
                 actionCharacters.add('W');
@@ -104,11 +94,9 @@ public class Board extends JPanel {
             }
         });
     }
-
     protected void assessKeyAction(char c) {
         mediator.update(Subscriber.EventType.REQUEST_KEY_ACTION, c);
     }
-
     public void updateTileBoard(List<Integer> allValues){
         for (int i = 0; i < allValues.size(); i++) {
             Tile.adjustTile(tiles.get(i), allValues.get(i));
@@ -123,13 +111,7 @@ public class Board extends JPanel {
     public void updateHighscoreDisplay(int value){
         highscoreDisplay.setText(String.valueOf(value));
     }
-    protected void updateContinueGame(){
-        continueAfterWin = true;
-    }
     public void setScore(int value){
         this.points = points + value;
-    }
-    public List<Integer>getAllValues(){
-        return allValues;
     }
 }

@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import Infrastructure.Mediator;
 import Infrastructure.Subscriber;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -30,7 +29,6 @@ public class UserDatabase implements Subscriber {
         this.mediator = mediator;
         mediator.subscribe(this);
     }
-
     private List<User> retrieveUsersFromFile() {
         List<User> users = new ArrayList<>();
         try {
@@ -42,7 +40,6 @@ public class UserDatabase implements Subscriber {
         }
         return users;
     }
-
     public void saveToFile(User user){
         allUsers.add(user);
         try{
@@ -52,7 +49,6 @@ public class UserDatabase implements Subscriber {
             e.printStackTrace();
         }
     }
-
     private void saveNewUser(String [] userInput){
         allUsers = retrieveUsersFromFile();
         String username = userInput[0];
@@ -72,9 +68,7 @@ public class UserDatabase implements Subscriber {
             mediator.update(EventType.RETURN_USERNAME_TAKEN, username);
         }
     }
-
     private void validateUser(String[] userInput){
-        System.out.println("validateUser in UserDatabase is reached");
         allUsers = retrieveUsersFromFile();
         String username = userInput[0];
         String password = userInput[1];
@@ -83,7 +77,6 @@ public class UserDatabase implements Subscriber {
         for (User user : allUsers){
             if (user.getUsername().equalsIgnoreCase(username)){
                 validUser = user;
-               System.out.println("foundUser is true");
                 foundUser = true;
             }
         }
@@ -99,7 +92,6 @@ public class UserDatabase implements Subscriber {
             mediator.update(EventType.RETURN_NO_SUCH_USER, null);
         }
     }
-
     private static Path getUserPath() {
         Path path = Paths.get("src/Server/Database/Users.txt");
         if (!Files.exists(path)) {
@@ -111,10 +103,8 @@ public class UserDatabase implements Subscriber {
         }
         return path;
     }
-
     @Override
     public void update(EventType e, Object data) {
-        System.out.println("update in UserDatabase is reached, eventType is: " + e);
         if (e == EventType.REQUEST_VALIDATE_USER){
             String[] userInput = (String[]) data;
             validateUser(userInput);

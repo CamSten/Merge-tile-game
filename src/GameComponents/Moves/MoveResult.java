@@ -14,7 +14,6 @@ public class MoveResult {
     public  List<List<Integer>> getNewValues (){
         return newValues;
     }
-
     public boolean hasValuesChanged(){
         return changedValues;
     }
